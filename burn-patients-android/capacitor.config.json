@@ -1,0 +1,9 @@
+{
+  "appId": "jo.zarqa.burnpatients",
+  "appName": "ملفات المرضى",
+  "webDir": "www",
+  "android": { "allowMixedContent": false },
+  "plugins": {
+    "PushNotifications": { "presentationOptions": ["badge", "sound", "alert"] }
+  }
+}

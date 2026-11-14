@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="مرضاي">
+<title>ملفات المرضى</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#17212b;--mut:#667085;--pr:#0f766e;--prt:#fff;--bd:#dfe4e9;--dn:#b42318;--ok:#067647}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151b;--card:#1a222b;--tx:#e8edf2;--mut:#98a2b3;--pr:#2dd4bf;--prt:#06201d;--bd:#2b3640;--dn:#f97066;--ok:#47cd89;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10151b;--card:#1a222b;--tx:#e8edf2;--mut:#98a2b3;--pr:#2dd4bf;--prt:#06201d;--bd:#2b3640;--dn:#f97066;--ok:#47cd89;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;min-height:100vh;padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+main{max-width:640px;margin:0 auto;padding:12px 16px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:20px;margin:6px 0 10px}h2{font-size:16px;margin:14px 0 6px}
+label{display:block;font-size:14px;color:var(--mut);margin-top:8px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1}
+button,input,textarea,select{font:inherit;color:var(--tx)}
+button{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.pr,.tabs button.on{background:var(--pr);color:var(--prt);border-color:var(--pr)}
+button.dn{color:var(--dn)}
+button.sm{padding:4px 10px}
+input,textarea,select{width:100%;border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:10px;margin:4px 0}
+input[type=checkbox]{width:auto;margin:0 0 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:8px 0}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.item{cursor:pointer}.item b{display:block}.mut{color:var(--mut);font-size:14px}
+.past{opacity:.55}
+.ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:8px 0}
+.pw{position:relative}.ph img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;cursor:pointer;background:var(--bd);display:block}
+.pw .x{position:absolute;top:3px;left:3px;width:26px;height:26px;padding:0;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;line-height:26px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:9}
+#lb img{max-width:96%;max-height:80%}
+#msg{min-height:22px;color:var(--dn)}#msg.ok{color:var(--ok)}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}#dlg .card{width:100%;max-width:360px}
+#banner .demo{background:#fef0c7;color:#7a2e0e;border-radius:10px;padding:8px 12px;margin:6px 0;font-size:14px}
+.tbl{overflow:auto;border:1px solid var(--bd);border-radius:10px;background:var(--card)}.tbl table{border-collapse:collapse;font-size:13px;white-space:nowrap}.tbl th,.tbl td{border:1px solid var(--bd);padding:4px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis}.tbl th{background:var(--bd)}
+code{background:var(--bd);padding:2px 6px;border-radius:6px;direction:ltr;unicode-bidi:embed;word-break:break-all}
+.seg button.on{background:var(--pr);color:var(--prt);border-color:var(--pr)}
+a.btn{display:block;text-align:center;text-decoration:none;color:var(--tx);border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:10px 14px;margin:8px 0}
+.nav{margin:8px 0}.ct{text-align:center}
+.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.wh{text-align:center;font-size:12px;color:var(--mut)}
+.dc{position:relative;aspect-ratio:1;padding:0;border-radius:8px;display:flex;align-items:center;justify-content:center;min-width:0}
+.dc.oth{opacity:.4}.dc.tod{border-color:var(--pr);border-width:2px}.dc.sel{background:var(--pr);color:var(--prt)}
+.dc i{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10px;background:var(--dn);color:#fff;border-radius:8px;padding:0 5px;line-height:15px}
+.wk{display:flex;flex-direction:column;gap:6px}.wd{display:flex;gap:10px;border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:8px}.wd.tod{border-color:var(--pr);border-width:2px}
+.wl{width:64px;flex:none;display:flex;flex-direction:column}.wc{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.chip{display:inline-block;border-radius:8px;padding:3px 8px;font-size:13px;background:var(--bd);color:var(--tx)}
+.chip small{display:block;color:inherit;opacity:.8;font-size:11px}
+.chip.major{background:var(--pr);color:var(--prt)}.chip.daily{background:#b54708;color:#fff}.chip.ap{background:#175cd3;color:#fff}
+.wc .chip{cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><h1>ملفات المرضى</h1><div id="who"></div></div>
+<div id="banner"></div>
+<div id="msg"></div>
+<div id="app"></div>
+</main>
+<div id="dlg"><div class="card"><p></p><div class="row"><button class="pr" data-yes>نعم</button><button data-no>لا</button></div></div></div>
+<div id="lb"><img alt=""><div class="row" style="width:90%;max-width:360px"><button data-lbclose>إغلاق</button></div></div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+'use strict';
+const SCOPE='openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.events';
+const DB_NAME='قاعدة بيانات المرضى',FOLDER_NAME='صور المرضى',T1='المرضى',T2='المواعيد',T3='الأجهزة';
+const REDIRECT_URI='__REDIRECT_URI__',NATIVE_SCHEME='burnzarqa';
+const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+const NP=n=>(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins[n])||null;
+const H1=['اسم المريض','البريد الإلكتروني','العمر','رقم الاتصال','الرقم الوطني','التشخيص','اسم العملية','الطبيب المعالج','نوع العملية','تاريخ العملية','حالة العملية','ملاحظات','المرجع','روابط صور الفحوصات والأشعة والاستشارات','روابط صور الحالة المرضية','روابط صور قبل العملية','روابط صور بعد العملية','المعرّف','معرّف حدث التقويم','تاريخ الإنشاء','أدخله','آخر تعديل بواسطة','آخر تعديل في'];
+const H3=['رمز الجهاز','المستخدم','البريد','آخر تحديث'];
+const H2=['اسم المريض','التاريخ','ملاحظة','معرّف المريض','المعرّف','أضافه'];
+const OT={major:'رئيسية',daily:'يومية'},OS={post:'مؤجلة',cancelled:'ملغاة',done:'تمت'};
+const rev=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[v,k]));
+const OTr=rev(OT),OSr=rev(OS);
+const P=[['inv','صور الفحوصات والأشعة والاستشارات'],['cond','صور الحالة المرضية'],['before','صور قبل العملية'],['after','صور بعد العملية']];
+const DEMO_ONLY=false;
+const DEF={clientId:'',deptEmail:'',sheetUrl:'',calId:'',autoCal:true,doctors:'د غيث مساعدة، د أكرم عبوي، د معتز قسايمة، د اياد صوالحة'};
+
+const MEM={};
+const LS={get(k){try{const v=localStorage.getItem(k);return v==null?(MEM[k]==null?null:MEM[k]):v}catch(e){return MEM[k]==null?null:MEM[k]}},set(k,v){MEM[k]=v;try{localStorage.setItem(k,v)}catch(e){}}};
+let cfg=Object.assign({},DEF);
+function loadCfg(u){let c={};try{c=JSON.parse(LS.get('cfg_'+u)||LS.get('cfg_default')||'{}')}catch(e){}cfg=Object.assign({},DEF,c);}
+function saveCfg(){const j=JSON.stringify(cfg);LS.set('cfg_'+S.me.username,j);LS.set('cfg_default',j);}
+const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+/* local app accounts (identification only; Google sign-in is the real gate to the data) */
+const getUsers=()=>{try{return JSON.parse(LS.get('users')||'{}')}catch(e){return {}}};
+const b64e=a=>btoa(String.fromCharCode(...a)),b64d=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function hashPw(pw,salt){
+  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+  return b64e(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:b64d(salt),iterations:150000,hash:'SHA-256'},k,256)));
+}
+const who=()=>S.me?(S.me.name||S.me.username):'';
+const stamp=()=>{const d=new Date();return ymd(d)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
+const docs=()=>cfg.doctors.split(/[،,\n]/).map(s=>s.trim()).filter(Boolean);
+
+const S={screen:'auth',demo:false,me:null,authMode:'',mine:false,user:null,sid:'',gid:{},folder:'',pts:[],ap:[],cur:null,tab:'p',q:'',adding:false,lb:null};
+let token=null,tokenExp=0,tc=null,tcCid='',pend=null;
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const msg=(t,ok)=>{const m=$('#msg');m.textContent=t||'';m.className=ok?'ok':'';};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const fmt=d=>{try{return new Date(d+'T00:00:00').toLocaleDateString('ar-JO',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}catch(e){return d}};
+const col=n=>{let s='';while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26);}return s;};
+const q1=t=>"'"+t+"'";
+
+/* ---------- Google auth + http ---------- */
+let nPend=null;
+function nativeToken(interactive){
+  return new Promise((res,rej)=>{
+    if(token&&Date.now()<tokenExp-60000&&!interactive)return res(token);
+    if(!cfg.clientId)return rej(new Error('أدخل Client ID من الإعدادات'));
+    const B=NP('Browser');if(!B)return rej(new Error('المتصفح الداخلي غير متاح'));
+    const hint=cfg.deptEmail||(S.user&&S.user.email)||LS.get('email')||'';
+    const st=uid();
+    const p=new URLSearchParams({client_id:cfg.clientId,redirect_uri:REDIRECT_URI,response_type:'token',scope:SCOPE,state:st,include_granted_scopes:'true'});
+    if(hint)p.set('login_hint',hint);
+    if(!interactive)p.set('prompt','none');else if(!hint)p.set('prompt','select_account');
+    nPend={res,rej,st,interactive};
+    B.open({url:'https://accounts.google.com/o/oauth2/v2/auth?'+p.toString()}).catch(e=>{nPend=null;rej(e);});
+  });
+}
+function initNative(){
+  const A=NP('App'),B=NP('Browser');
+  if(!A)return;
+  A.addListener('appUrlOpen',e=>{
+    if(!e.url||e.url.indexOf(NATIVE_SCHEME+'://oauth')!==0)return;
+    const h=new URLSearchParams(e.url.split('#')[1]||e.url.split('?')[1]||'');
+    const pe=nPend;nPend=null;if(B)B.close().catch(()=>{});
+    if(!pe)return;
+    if(h.get('error')){pe.rej(new Error(pe.interactive?(h.get('error_description')||h.get('error')):'AUTH'));return;}
+    if(h.get('state')!==pe.st){pe.rej(new Error('AUTH'));return;}
+    token=h.get('access_token');tokenExp=Date.now()+(Number(h.get('expires_in'))||3600)*1000;pe.res(token);
+  });
+  if(B)B.addListener('browserFinished',()=>{setTimeout(()=>{if(nPend){const pe=nPend;nPend=null;pe.rej(new Error(pe.interactive?'لم يكتمل تسجيل الدخول':'AUTH'));}},800);});
+}
+function getToken(interactive){
+  if(NATIVE)return nativeToken(interactive);
+  return new Promise((res,rej)=>{
+    if(token&&Date.now()<tokenExp-60000&&!interactive)return res(token);
+    if(!window.google||!google.accounts||!google.accounts.oauth2)return rej(new Error('تعذّر تحميل خدمة جوجل. تأكد من الاتصال بالإنترنت.'));
+    if(!cfg.clientId)return rej(new Error('أدخل Client ID من الإعدادات'));
+    if(!tc||tcCid!==cfg.clientId){
+      tcCid=cfg.clientId;
+      tc=google.accounts.oauth2.initTokenClient({client_id:cfg.clientId,scope:SCOPE,
+        callback:r=>{if(r.error){pend&&pend.rej(new Error(r.error_description||r.error));return;}token=r.access_token;tokenExp=Date.now()+(r.expires_in||3600)*1000;pend&&pend.res(token);},
+        error_callback:e=>{pend&&pend.rej(new Error(interactiveFlag?(e.type==='popup_failed_to_open'?'المتصفح منع نافذة تسجيل الدخول':'لم يكتمل تسجيل الدخول'):'AUTH'));}});
+    }
+    interactiveFlag=!!interactive;
+    pend={res,rej};
+    const hint=cfg.deptEmail||(S.user&&S.user.email)||LS.get('email')||undefined;
+    tc.requestAccessToken(interactive?(hint?{hint,prompt:''}:{prompt:'select_account'}):{hint,prompt:'none'});
+  });
+}
+let interactiveFlag=true;
+async function api(url,opt,retry){
+  if(S.demo)return demoFetch(url,opt);
+  let t;
+  try{t=await getToken(false);}catch(e){throw new Error('AUTH');}
+  const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({},opt&&opt.headers,{Authorization:'Bearer '+t})}));
+  if(r.status===401&&retry!==false){token=null;return api(url,opt,false);}
+  if(!r.ok){let m='';try{m=(await r.json()).error.message}catch(e){}if(r.status===401)throw new Error('AUTH');throw new Error(m||('HTTP '+r.status));}
+  return r;
+}
+const J=async(u,o)=>{const r=await api(u,o);const t=await r.text();return t?JSON.parse(t):{};};
+const JH={'Content-Type':'application/json'};
+const post=b=>({method:'POST',headers:JH,body:JSON.stringify(b)});
+const put=b=>({method:'PUT',headers:JH,body:JSON.stringify(b)});
+const patch=b=>({method:'PATCH',headers:JH,body:JSON.stringify(b)});
+const sh=sid=>'https://sheets.googleapis.com/v4/spreadsheets/'+sid;
+const vals=(sid,range)=>sh(sid)+'/values/'+encodeURIComponent(range);
+const sidFromUrl=u=>{const m=(u||'').match(/\/d\/([A-Za-z0-9_-]+)/);return m?m[1]:'';};
+
+/* ---------- demo mode: same app, local fake Google (no network, nothing leaves the browser) ---------- */
+let D=null;
+function dLoad(){if(D)return D;try{D=JSON.parse(LS.get('demo_db')||'null');}catch(e){}if(!D)D={tabs:{},ev:{},blobs:{},n:0};return D;}
+function dSave(){LS.set('demo_db',JSON.stringify(D));}
+function dReset(){D=null;LS.set('demo_db','');}
+function nextDow(dow){const d=new Date();do{d.setDate(d.getDate()+1);}while(d.getDay()!==dow);return ymd(d);}
+function demoInit(){
+  const d=dLoad();
+  if(!d.tabs[T1]){
+    d.tabs[T1]={id:1,rows:[H1.slice()]};d.tabs[T2]={id:2,rows:[H2.slice()]};
+    const mk=(o)=>Object.assign({email:'',inv:[],cond:[],before:[],after:[],eventId:'',id:uid(),created:Date.now(),by:'بيانات تجريبية',editBy:'بيانات تجريبية',editAt:stamp(),ref:'',notes:''},o);
+    d.tabs[T1].rows.push(toRow(mk({name:'مريض تجريبي أ',age:'34',phone:'0790000001',nid:'0000000001',dx:'حرق درجة ثانية في الساعد',op:'تطعيم جلد',doc:docs()[0]||'',otype:'major',odate:nextDow(2),ostat:'post',notes:'هذا سجل تجريبي'})));
+    d.tabs[T1].rows.push(toRow(mk({name:'مريض تجريبي ب',age:'8',phone:'0790000002',nid:'0000000002',dx:'ندبة تقلصية',op:'تحرير ندبة',doc:docs()[1]||docs()[0]||'',otype:'daily',odate:nextDow(3),ostat:'post'})));
+    dSave();
+  }
+  S.sid='demo';S.gid={};S.gid[T1]=1;S.gid[T2]=2;
+}
+const RES=(o,st)=>new Response(o===null?null:JSON.stringify(o),{status:st||200});
+const cn=s=>[...s].reduce((a,c)=>a*26+c.charCodeAt(0)-64,0);
+const rtrim=r=>{r=r.slice();while(r.length&&(r[r.length-1]===''||r[r.length-1]==null))r.pop();return r;};
+function prange(r){const m=r.match(/^'(.+)'!([A-Z]+)(\d*)(?::([A-Z]+)(\d*))?$/);return {tab:m[1],c1:m[2],r1:m[3]?+m[3]:1,c2:m[4]||m[2],r2:m[5]?+m[5]:Infinity};}
+async function demoFetch(url,opt){
+  const d=dLoad(),u=new URL(url),m=(opt&&opt.method)||'GET',p=decodeURIComponent(u.pathname);
+  const body=()=>{try{return JSON.parse(opt.body)}catch(e){return {}}};
+  if(u.host==='sheets.googleapis.com'){
+    const rest=p.replace(/^\/v4\/spreadsheets\/[^/:]+/,'');
+    if(rest===':batchUpdate'){for(const r of body().requests){if(r.deleteDimension){const g=r.deleteDimension.range;const t=Object.values(d.tabs).find(x=>x.id===g.sheetId);t.rows.splice(g.startIndex,g.endIndex-g.startIndex);}}dSave();return RES({});}
+    if(rest==='/values:batchUpdate'){for(const x of body().data){const r=prange(x.range),t=d.tabs[r.tab];while(t.rows.length<r.r1)t.rows.push([]);const row=t.rows[r.r1-1],c=cn(r.c1)-1;while(row.length<c)row.push('');row[c]=x.values[0][0];}dSave();return RES({});}
+    if(rest.startsWith('/values/')){
+      let rng=rest.slice(8),app=false;if(rng.endsWith(':append')){app=true;rng=rng.slice(0,-7);}
+      const r=prange(rng),t=d.tabs[r.tab];
+      if(m==='GET'){const c1=cn(r.c1)-1,c2=cn(r.c2);let rows=t.rows.slice(r.r1-1,r.r2===Infinity?undefined:r.r2).map(x=>rtrim(x.slice(c1,c2)));while(rows.length&&!rows[rows.length-1].length)rows.pop();return RES(rows.length?{values:rows}:{});}
+      if(m==='PUT'){const c=cn(r.c1)-1;body().values.forEach((v,i)=>{while(t.rows.length<r.r1+i)t.rows.push([]);const row=t.rows[r.r1-1+i];while(row.length<c)row.push('');v.forEach((x,k)=>{row[c+k]=x;});});dSave();return RES({});}
+      if(m==='POST'&&app){body().values.forEach(v=>t.rows.push(v));dSave();return RES({});}
+    }
+  }
+  if(u.host==='www.googleapis.com'){
+    let mm=p.match(/^\/calendar\/v3\/calendars\/([^/]+)\/events(?:\/(.+))?$/);
+    if(mm){
+      if(m==='POST'){const id='ev'+uid();d.ev[id]=Object.assign(body(),{cal:mm[1]});dSave();return RES({id});}
+      if(m==='PATCH'){if(!d.ev[mm[2]])return RES({error:{message:'gone'}},404);Object.assign(d.ev[mm[2]],body());dSave();return RES({id:mm[2]});}
+      if(m==='DELETE'){delete d.ev[mm[2]];dSave();return RES(null,204);}
+    }
+    mm=p.match(/^\/drive\/v3\/files\/([^/]+)$/);
+    if(mm){
+      if(m==='GET'&&u.searchParams.get('alt')==='media'){const b=d.blobs[mm[1]];if(!b)return RES({error:{message:'not found'}},404);return new Response(await (await fetch(b)).blob());}
+      if(m==='PATCH'){delete d.blobs[mm[1]];dSave();return RES({id:mm[1]});}
+    }
+  }
+  return RES({error:{message:'demo: unsupported '+m+' '+p}},500);
+}
+async function enterDemo(){
+  S.demo=true;S.user={email:'وضع التجربة'};S.sid='';S.folder='';
+  await ensure();await loadAll();S.screen='app';msg('');render();
+}
+let askRes=null;
+function ask(t){return new Promise(res=>{$('#dlg p').textContent=t;$('#dlg').style.display='flex';askRes=res;});}
+
+/* ---------- bootstrap sheet + folder ---------- */
+async function ensure(){
+  if(S.demo){demoInit();return;}
+  const key='sid_'+S.user.email;
+  let sid=sidFromUrl(cfg.sheetUrl)||LS.get(key);
+  if(!sid){
+    const q=encodeURIComponent("name='"+DB_NAME+"' and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false");
+    const l=await J('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&pageSize=1');
+    sid=l.files&&l.files[0]&&l.files[0].id;
+  }
+  if(!sid){
+    const c=await J('https://sheets.googleapis.com/v4/spreadsheets',post({properties:{title:DB_NAME},sheets:[{properties:{title:T1,rightToLeft:true}},{properties:{title:T2,rightToLeft:true}},{properties:{title:T3,rightToLeft:true}}]}));
+    sid=c.spreadsheetId;
+  }
+  if(!sidFromUrl(cfg.sheetUrl))LS.set(key,sid);
+  S.sid=sid;
+  const meta=()=>J(sh(sid)+'?fields='+encodeURIComponent('sheets.properties(sheetId,title)'));
+  let m=await meta();
+  const have=m.sheets.map(x=>x.properties.title);
+  const add=[T1,T2,T3].filter(t=>!have.includes(t));
+  if(add.length){await J(sh(sid)+':batchUpdate',post({requests:add.map(t=>({addSheet:{properties:{title:t,rightToLeft:true}}}))}));m=await meta();}
+  S.gid={};m.sheets.forEach(x=>{S.gid[x.properties.title]=x.properties.sheetId;});
+  for(const [t,h] of [[T1,H1],[T2,H2],[T3,H3]]){
+    await J(vals(sid,q1(t)+'!A1:'+col(h.length)+'1')+'?valueInputOption=RAW',put({values:[h]}));
+  }
+}
+async function ensureFolder(){
+  if(S.demo)return 'demofolder';
+  if(S.folder)return S.folder;
+  const key='fid_'+S.user.email;let f=LS.get(key);
+  if(f){try{const x=await J('https://www.googleapis.com/drive/v3/files/'+f+'?fields=id,trashed');if(x.trashed)f='';}catch(e){f='';}}
+  if(!f){
+    const q=encodeURIComponent("name='"+FOLDER_NAME+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    const l=await J('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id)&pageSize=1');
+    f=l.files&&l.files[0]&&l.files[0].id;
+  }
+  if(!f){const c=await J('https://www.googleapis.com/drive/v3/files?fields=id',post({name:FOLDER_NAME,mimeType:'application/vnd.google-apps.folder'}));f=c.id;}
+  LS.set(key,f);S.folder=f;return f;
+}
+
+/* ---------- data ---------- */
+const split=s=>String(s||'').split('\n').map(x=>x.trim()).filter(Boolean);
+const toRow=p=>[p.name,p.email,p.age,p.phone,p.nid,p.dx,p.op,p.doc,OT[p.otype]||'',p.odate,OS[p.ostat]||'',p.notes,p.ref,(p.inv||[]).join('\n'),(p.cond||[]).join('\n'),(p.before||[]).join('\n'),(p.after||[]).join('\n'),p.id,p.eventId||'',p.created||'',p.by,p.editBy,p.editAt].map(v=>v==null?'':String(v));
+async function loadAll(){
+  const [a,b]=await Promise.all([J(vals(S.sid,q1(T1)+'!A2:'+col(H1.length))),J(vals(S.sid,q1(T2)+'!A2:'+col(H2.length)))]);
+  const miss=[];
+  S.pts=(a.values||[]).map((r,i)=>{
+    r=r.concat(Array(H1.length).fill('')).slice(0,H1.length);
+    const p={row:i+2,name:r[0],email:r[1],age:r[2],phone:r[3],nid:r[4],dx:r[5],op:r[6],doc:r[7],otype:OTr[r[8]]||'',odate:r[9],ostat:OSr[r[10]]||'',notes:r[11],ref:r[12],inv:split(r[13]),cond:split(r[14]),before:split(r[15]),after:split(r[16]),id:r[17],eventId:r[18],created:r[19],by:r[20],editBy:r[21],editAt:r[22]};
+    if(!p.id&&(p.name||p.nid||p.phone)){p.id=uid();miss.push(p);}
+    return p;
+  }).filter(p=>p.name||p.nid||p.phone);
+  if(miss.length)await J(sh(S.sid)+'/values:batchUpdate',post({valueInputOption:'RAW',data:miss.map(p=>({range:q1(T1)+'!R'+p.row,values:[[p.id]]}))}));
+  const ap=[];
+  (b.values||[]).forEach((r,i)=>{r=r.concat(Array(H2.length).fill('')).slice(0,H2.length);if(r[1])ap.push({row:i+2,name:r[0],date:r[1],note:r[2],pid:r[3],id:r[4],by:r[5]});});
+  S.ap=ap;
+}
+const savePatient=p=>{p.editBy=who();p.editAt=stamp();return J(vals(S.sid,q1(T1)+'!A'+p.row+':'+col(H1.length)+p.row)+'?valueInputOption=RAW',put({values:[toRow(p)]}));};
+const addPatient=async o=>{const p=Object.assign({inv:[],cond:[],before:[],after:[]},o,{id:uid(),created:Date.now(),eventId:'',by:who(),editBy:who(),editAt:stamp()});await J(vals(S.sid,q1(T1)+'!A:'+col(H1.length))+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[toRow(p)]}));return p;};
+const delRows=(t,rows)=>J(sh(S.sid)+':batchUpdate',post({requests:rows.sort((a,b)=>b-a).map(r=>({deleteDimension:{range:{sheetId:S.gid[t],dimension:'ROWS',startIndex:r-1,endIndex:r}}}))}));
+
+/* ---------- calendar ---------- */
+function info(p){
+  const L=[['اسم المريض',p.name],['البريد',p.email],['العمر',p.age],['الهاتف',p.phone],['الرقم الوطني',p.nid],['التشخيص',p.dx],['العملية',p.op],['الطبيب',p.doc],['النوع',OT[p.otype]],['الحالة',OS[p.ostat]],['المرجع',p.ref],['ملاحظات',p.notes]];
+  return L.filter(x=>x[1]).map(x=>x[0]+': '+esc(x[1])).join('<br>');
+}
+async function syncCal(p){
+  if(!p.odate)return false;
+  const d=new Date(p.odate+'T00:00:00');d.setDate(d.getDate()+1);
+  const body={summary:(p.ostat==='cancelled'?'(ملغاة) ':'')+'عملية: '+(p.op||'')+' - '+p.name,description:info(p),start:{date:p.odate},end:{date:ymd(d)}};
+  const base='https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(cfg.calId||'primary')+'/events';
+  let ev=null;
+  if(p.eventId){try{ev=await J(base+'/'+encodeURIComponent(p.eventId),patch(body));}catch(e){if(e.message==='AUTH')throw e;ev=null;}}
+  if(!ev)ev=await J(base,post(body));
+  if(ev.id!==p.eventId){p.eventId=ev.id;await savePatient(p);}
+  return true;
+}
+
+/* ---------- photos ---------- */
+const blobs={};
+async function blobUrl(fid){
+  if(blobs[fid])return blobs[fid];
+  const r=await api('https://www.googleapis.com/drive/v3/files/'+fid+'?alt=media');
+  return blobs[fid]=URL.createObjectURL(await r.blob());
+}
+const fidOf=u=>{const m=String(u).match(/\/d\/([^/?]+)/);return m?m[1]:'';};
+async function toJpeg(file){
+  try{
+    const im=await createImageBitmap(file);
+    const k=Math.min(1,(S.demo?800:1600)/Math.max(im.width,im.height));
+    const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+    c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    return await new Promise((ok,no)=>c.toBlob(b=>b?ok(b):no(new Error('x')),'image/jpeg',S.demo?0.6:0.85));
+  }catch(e){return file;}
+}
+async function upDrive(blob,name,folder){
+  if(S.demo){const id='demo'+uid();dLoad().blobs[id]=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result);f.readAsDataURL(blob);});dSave();return {id};}
+  const b='x'+uid();
+  const body=new Blob(['--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name,parents:[folder]})+'\r\n--'+b+'\r\nContent-Type: '+(blob.type||'image/jpeg')+'\r\n\r\n',blob,'\r\n--'+b+'--']);
+  return J('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
+}
+/* ---------- single-form draft: everything is entered first, saved once at the end ---------- */
+function FIELDS(){return [['name','اسم المريض','text',1],['email','البريد الإلكتروني','email'],['age','العمر','number',1],['phone','رقم الاتصال','tel',1],['nid','الرقم الوطني','text',1],['dx','التشخيص','text',1],['op','اسم العملية','text',1],['doc','الطبيب المعالج','sel',1,docs().map(x=>[x,x])],['otype','نوع العملية','sel',1,[['major','رئيسية (الثلاثاء)'],['daily','يومية (الأربعاء)']]],['odate','تاريخ العملية','date',1],['ostat','حالة العملية','sel',0,[['post','مؤجلة'],['cancelled','ملغاة'],['done','تمت']]],['ref','المرجع','text']];}
+function startDraft(p){
+  const vals={};FIELDS().forEach(f=>{vals[f[0]]=p&&p[f[0]]||'';});vals.notes=p&&p.notes||'';
+  const ph={};P.forEach(x=>{ph[x[0]]=((p&&p[x[0]])||[]).map(u=>({url:u}));});
+  S.draft={pid:p?p.id:null,vals,ph,trash:[],dirty:false};S.cur=S.draft.pid;
+}
+function syncVals(){
+  const v=S.draft.vals;
+  FIELDS().forEach(f=>{const el=$('#f_'+f[0]);if(el)v[f[0]]=el.value.trim();});
+  const n=$('#f_notes');if(n)v.notes=n.value;
+}
+function fillGrid(cat){
+  const g=$('#ph_'+cat);if(!g||!S.draft)return;
+  g.innerHTML=S.draft.ph[cat].map((it,i)=>'<div class="pw"><img alt="" data-cat="'+cat+'" data-i="'+i+'"'+(it.preview?' src="'+it.preview+'"':' data-fid="'+esc(fidOf(it.url))+'"')+'><button class="x" data-rm="'+cat+':'+i+'" aria-label="إزالة">×</button></div>').join('');
+  g.querySelectorAll('img[data-fid]').forEach(async im=>{try{im.src=await blobUrl(im.dataset.fid);}catch(e){im.alt='✕';}});
+}
+function leaveDraft(){S.draft=null;S.cur=null;}
+async function saveDraft(){
+  const d=S.draft;
+  syncVals();
+  const o=d.vals,c=check(o);if(c.err){msg(c.err);return;}
+  if(d.pid&&!S.pts.find(x=>x.id===d.pid))await loadAll();
+  let todo=0;P.forEach(x=>d.ph[x[0]].forEach(it=>{if(!it.url)todo++;}));
+  let n=0;
+  if(todo){
+    const folder=await ensureFolder();
+    for(const x of P){
+      for(const it of d.ph[x[0]]){
+        if(it.url)continue;
+        msg('جارٍ رفع الصور… '+(++n)+'/'+todo,true);
+        const r=await upDrive(await toJpeg(it.file),o.name+' - '+x[1]+' - '+Date.now()+'.jpg',folder);
+        it.url='https://drive.google.com/file/d/'+r.id+'/view';
+      }
+    }
+  }
+  msg('جارٍ الحفظ في الشيت…',true);
+  const ph={};P.forEach(x=>{ph[x[0]]=d.ph[x[0]].map(it=>it.url);});
+  let pid=d.pid;
+  if(pid){
+    const p=Object.assign(S.pts.find(x=>x.id===pid),o,ph);
+    await savePatient(p);
+  }else{
+    const p=await addPatient(Object.assign({},o,ph));
+    pid=d.pid=p.id;S.cur=pid;
+  }
+  await loadAll();
+  let w='';
+  const q=S.pts.find(x=>x.id===pid);
+  if(q&&cfg.autoCal&&q.odate){try{await syncCal(q);}catch(e){if(e.message==='AUTH')throw e;w=' (تعذّر تحديث التقويم: '+e.message+')';}}
+  for(const u of d.trash){try{await api('https://www.googleapis.com/drive/v3/files/'+fidOf(u),patch({trashed:true}));}catch(e){if(e.message==='AUTH')throw e;}}
+  leaveDraft();await loadAll();render();window.scrollTo(0,0);
+  msg('تم الحفظ بنجاح. '+(c.warn||'')+w,!c.warn&&!w);
+}
+
+/* ---------- views ---------- */
+function authView(){
+  const n=Object.keys(getUsers()).length,reg=S.authMode==='reg'||!n;
+  return '<div class="card"><h2>'+(reg?'إنشاء حساب جديد':'تسجيل الدخول')+'</h2>'+
+  (reg?'<label>الاسم الكامل (يظهر في الشيت كاسم من أدخل البيانات)</label><input id="a_name" autocomplete="name">':'')+
+  '<label>اسم المستخدم</label><input id="a_user" dir="ltr" autocomplete="username" autocapitalize="none" autocorrect="off">'+
+  '<label>كلمة المرور'+(reg?' (6 أحرف على الأقل)':'')+'</label><input id="a_pass" type="password" dir="ltr" autocomplete="'+(reg?'new-password':'current-password')+'">'+
+  (reg?'<label>تأكيد كلمة المرور</label><input id="a_pass2" type="password" dir="ltr" autocomplete="new-password">':'')+
+  '<button class="pr" data-auth style="width:100%;margin-top:12px">'+(reg?'إنشاء الحساب':'دخول')+'</button>'+
+  '<p class="mut">'+(reg?(n?'<button class="sm" data-mode="login">لدي حساب</button>':''):'<button class="sm" data-mode="reg">حساب جديد</button> <button class="sm" data-forgot>نسيت كلمة المرور</button>')+'</p>'+
+  '<p class="mut">الحساب محفوظ على هذا الجهاز فقط، وبياناتك الطبية تُحفظ في جوجل.</p></div>';
+}
+function loginView(){
+  return '<div class="card"><h2>مرحباً</h2><p>اربط حساب جوجل الخاص بالدائرة. البيانات تُحفظ في شيت ودرايف وتقويم هذا الحساب، وبجانب كل سجل اسم من أدخله.</p><button class="pr" data-login style="width:100%">تسجيل الدخول بحساب جوجل</button><p class="mut" style="margin-top:14px">للتجربة فقط:</p><button data-demo style="width:100%">جرّب بدون جوجل (بيانات تجريبية على هذا الجهاز)</button></div>';
+}
+function demoSettingsView(){
+  return '<div class="card"><h2>الإعدادات (وضع التجربة)</h2><label>الأطباء (افصل بينهم بفاصلة)</label><textarea id="s_docs" rows="2">'+esc(cfg.doctors)+'</textarea><div class="row" style="margin-top:12px"><button class="pr" data-savedoc>حفظ</button><button data-cancelcfg>رجوع</button></div>'+
+  '<p><button class="dn" data-demoreset>مسح كل البيانات التجريبية</button></p><p><button class="dn" data-logout>تسجيل الخروج</button></p></div>';
+}
+function demoSheetView(){
+  const d=dLoad();
+  const tbl=(t,h)=>'<div class="tbl"><table><tr>'+h.map(x=>'<th>'+esc(x)+'</th>').join('')+'</tr>'+d.tabs[t].rows.slice(1).map(r=>'<tr>'+h.map((_,i)=>'<td>'+esc(String(r[i]==null?'':r[i]).split('\n').length>1?String(r[i]).split('\n').length+' روابط':r[i])+'</td>').join('')+'</tr>').join('')+'</table></div>';
+  const ev=Object.values(d.ev).sort((a,b)=>(a.start.date||'').localeCompare(b.start.date||''));
+  return '<button data-closesheet>→ رجوع</button><h2>هكذا سيبدو الشيت (تبويب المرضى)</h2><p class="mut">اسحب الجدول لرؤية بقية الأعمدة. أعمدة الصور تحتوي روابط درايف.</p>'+tbl(T1,H1)+
+  '<h2>تبويب المواعيد</h2>'+tbl(T2,H2)+
+  '<h2>هكذا سيبدو التقويم</h2>'+(ev.map(e=>'<div class="card"><b>'+esc(e.summary)+'</b><br><span class="mut">'+esc(e.start.date)+' · يوم كامل</span><p>'+e.description+'</p></div>').join('')||'<p class="mut">لا توجد أحداث بعد.</p>');
+}
+function settingsView(){
+  if(S.demo)return demoSettingsView();
+  const first=!cfg.clientId;
+  return '<div class="card"><h2>الإعدادات</h2>'+(first?'<p>قبل الدخول أدخل Client ID الخاص بالتطبيق (من Google Cloud).</p>':'')+
+  '<label>عنوان التطبيق الحالي (أضفه في Authorized JavaScript origins)</label><p><code>'+esc(location.origin)+'</code></p>'+
+  '<label>بريد حساب جوجل الخاص بالدائرة</label><input id="s_dept" dir="ltr" type="email" value="'+esc(cfg.deptEmail)+'" placeholder="burnzarqa@gmail.com">'+
+  '<label>Client ID</label><input id="s_cid" dir="ltr" value="'+esc(cfg.clientId)+'" placeholder="xxxx.apps.googleusercontent.com">'+
+  '<label>رابط جوجل شيت (اتركه فارغاً لإنشاء شيت تلقائياً)</label><input id="s_sheet" dir="ltr" value="'+esc(cfg.sheetUrl)+'" placeholder="https://docs.google.com/spreadsheets/d/...">'+
+  '<label>التقويم (اتركه فارغاً للتقويم الرئيسي، أو اكتب بريد التقويم)</label><input id="s_cal" dir="ltr" value="'+esc(cfg.calId)+'">'+
+  '<label>الأطباء (افصل بينهم بفاصلة)</label><textarea id="s_docs" rows="2">'+esc(cfg.doctors)+'</textarea>'+
+  '<label><input type="checkbox" id="s_auto"'+(cfg.autoCal?' checked':'')+'>تحديث التقويم تلقائياً عند حفظ المريض</label>'+
+  '<div class="row" style="margin-top:12px"><button class="pr" data-savecfg>حفظ</button>'+(first?'':'<button data-cancelcfg>إلغاء</button>')+'</div>'+
+  '<p><button class="dn" data-logout>تسجيل الخروج من التطبيق</button></p></div>';
+}
+const tabsHtml=()=>'<div class="tabs"><button data-t="p" class="'+(S.tab==='p'?'on':'')+'">المرضى</button><button data-t="a" class="'+(S.tab==='a'?'on':'')+'">الأجندة</button></div>';
+function form(v){
+  return FIELDS().map(f=>{
+    const k=f[0],val=v[k]||'',id='f_'+k,lab='<label>'+f[1]+(f[3]?' *':'')+'</label>';
+    if(f[2]==='sel'){const opts=f[4].slice();if(val&&!opts.some(o=>o[0]===val))opts.push([val,val]);return lab+'<select id="'+id+'"><option value="">اختر</option>'+opts.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>';}
+    return lab+'<input id="'+id+'" type="'+f[2]+'" value="'+esc(val)+'">';
+  }).join('')+'<label>ملاحظات</label><textarea id="f_notes" rows="3">'+esc(v.notes)+'</textarea>';
+}
+function check(o){
+  const f=FIELDS().find(f=>f[3]&&!o[f[0]]);if(f)return{err:'املأ حقل: '+f[1]};
+  const d=new Date(o.odate+'T00:00:00').getDay();
+  if(o.otype==='major'&&d!==2)return{warn:'تنبيه: العمليات الرئيسية تكون يوم الثلاثاء'};
+  if(o.otype==='daily'&&d!==3)return{warn:'تنبيه: العمليات اليومية تكون يوم الأربعاء'};
+  return{};
+}
+function list(){
+  const q=S.q;
+  const f=S.pts.filter(p=>(!S.mine||p.by===who())&&[p.name,p.ref,p.nid,p.phone,p.dx,p.op,p.doc].some(v=>(v||'').includes(q))).sort((x,y)=>(Number(y.created)||0)-(Number(x.created)||0));
+  return '<div class="row"><button class="pr" data-new>+ مريض جديد</button><button data-sheetlink>فتح الشيت</button><button data-mine>'+(S.mine?'ما أدخلته أنا ✓':'عرض: الكل')+'</button></div><input id="q" placeholder="ابحث بالاسم أو الرقم الوطني أو الهاتف أو المرجع أو التشخيص أو العملية" value="'+esc(q)+'">'+
+  (f.map(p=>'<div class="card item" data-open="'+esc(p.id)+'"><b>'+esc(p.name)+'</b><span class="mut">العمر: '+esc(p.age)+' · '+esc(p.op||'-')+(p.odate?' · '+esc(p.odate):'')+(p.by?' · أدخله: '+esc(p.by):'')+'</span></div>').join('')||'<p class="mut">لا يوجد مرضى.</p>');
+}
+const MN=['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
+const WD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const pd=d=>new Date(d+'T00:00:00');
+function agenda(){
+  const today=ymd(new Date());
+  if(!S.av)S.av='list';
+  if(!S.ad)S.ad=today;
+  const ops=S.pts.filter(p=>p.odate).map(p=>({pid:p.id,name:p.name,date:p.odate,ty:p.otype,note:'عملية: '+(p.op||'')+(p.ostat?' ('+OS[p.ostat]+')':'')}));
+  const s=ops.concat(S.ap.map(x=>Object.assign({ty:'ap'},x))).sort((x,y)=>(x.date||'').localeCompare(y.date||''));
+  const row=x=>'<div class="card item '+(x.date<today?'past':'')+'" data-open="'+esc(x.pid)+'"><b>'+esc(x.name)+'</b><span class="mut">'+fmt(x.date)+(x.note?' · '+esc(x.note):'')+'</span></div>';
+  const calUrl='https://calendar.google.com/calendar/u/0/r'+(S.av==='list'?'':(S.av==='month'?'/month/':'/week/')+pd(S.ad).getFullYear()+'/'+(pd(S.ad).getMonth()+1)+'/'+pd(S.ad).getDate());
+  let h='<div class="row seg">'+[['list','قائمة'],['week','أسبوعي'],['month','شهري']].map(v=>'<button data-av="'+v[0]+'" class="'+(S.av===v[0]?'on':'')+'">'+v[1]+'</button>').join('')+'</div>'+
+    '<a class="btn" href="'+calUrl+'" target="_blank" rel="noopener">فتح Google Calendar ↗</a>'+(S.demo?'<p class="mut">في وضع التجربة يُفتح تقويم جوجل الفعلي ولا تظهر فيه هذه البيانات الافتراضية.</p>':'');
+  const aq=(S.aq||'').trim();
+  h+='<input id="aq" type="search" placeholder="ابحث في الأجندة بالاسم أو العملية أو الملاحظة أو التاريخ" value="'+esc(S.aq||'')+'">';
+  if(aq){
+    const r=s.filter(x=>[x.name,x.note,x.date,fmt(x.date)].some(v=>(v||'').includes(aq)));
+    return h+'<h2>نتائج البحث ('+r.length+')</h2>'+(r.map(row).join('')||'<p class="mut">لا توجد نتائج.</p>');
+  }
+  if(S.av==='list'){
+    const up=s.filter(x=>x.date>=today),pa=s.filter(x=>x.date<today).reverse();
+    return h+'<h2>القادمة</h2>'+(up.map(row).join('')||'<p class="mut">لا توجد مواعيد قادمة.</p>')+(pa.length?'<h2>السابقة</h2>'+pa.map(row).join(''):'');
+  }
+  const by={};s.forEach(x=>{(by[x.date]=by[x.date]||[]).push(x);});
+  const A=pd(S.ad);
+  const chip=x=>'<span class="chip '+(x.ty||'')+'">'+esc(x.name)+'</span>';
+  let grid='',title='';
+  if(S.av==='month'){
+    title=MN[A.getMonth()]+' '+A.getFullYear();
+    const first=new Date(A.getFullYear(),A.getMonth(),1),start=new Date(first);start.setDate(1-first.getDay());
+    grid='<div class="mg">'+WD.map(w=>'<div class="wh">'+w.slice(0,3)+'</div>').join('');
+    for(let i=0;i<42;i++){
+      const d=new Date(start);d.setDate(start.getDate()+i);const k=ymd(d),it=by[k]||[];
+      if(i>=35&&d.getMonth()!==A.getMonth())break;
+      grid+='<button class="dc '+(d.getMonth()!==A.getMonth()?'oth ':'')+(k===today?'tod ':'')+(k===S.ad?'sel':'')+'" data-day="'+k+'"><span>'+d.getDate()+'</span>'+(it.length?'<i>'+it.length+'</i>':'')+'</button>';
+    }
+    grid+='</div>';
+  }else{
+    const st=new Date(A);st.setDate(A.getDate()-A.getDay());const en=new Date(st);en.setDate(st.getDate()+6);
+    title=st.getDate()+' '+MN[st.getMonth()]+' – '+en.getDate()+' '+MN[en.getMonth()]+' '+en.getFullYear();
+    grid='<div class="wk">';
+    for(let i=0;i<7;i++){
+      const d=new Date(st);d.setDate(st.getDate()+i);const k=ymd(d),it=by[k]||[];
+      grid+='<div class="wd '+(k===today?'tod':'')+'" data-day="'+k+'"><div class="wl"><b>'+WD[i]+'</b><span class="mut">'+d.getDate()+'</span></div><div class="wc">'+(it.map(x=>'<div class="chip '+(x.ty||'')+'" data-open="'+esc(x.pid)+'">'+esc(x.name)+'<small>'+esc(x.note||'')+'</small></div>').join('')||'<span class="mut">—</span>')+'</div></div>';
+    }
+    grid+='</div>';
+  }
+  h+='<div class="row nav"><button data-nav="-1">→ السابق</button><button data-today>اليوم</button><button data-nav="1">التالي ←</button></div><h2 class="ct">'+title+'</h2>'+grid;
+  if(S.av==='month'){
+    const it=by[S.ad]||[];
+    h+='<h2>'+fmt(S.ad)+'</h2>'+(it.map(row).join('')||'<p class="mut">لا توجد مواعيد في هذا اليوم.</p>');
+  }
+  h+='<p class="mut leg"><span class="chip major">رئيسية</span> <span class="chip daily">يومية</span> <span class="chip ap">مراجعة</span></p>';
+  return h;
+}
+function editorView(){
+  const d=S.draft,p=d.pid?S.pts.find(x=>x.id===d.pid):null;
+  let h='<button data-back>→ رجوع</button>'+(p?'<p class="mut">أدخله: '+esc(p.by||'-')+(p.editBy?' · آخر تعديل: '+esc(p.editBy)+' ('+esc(p.editAt)+')':'')+'</p>':'<h2>مريض جديد</h2>');
+  h+='<div class="card">'+form(d.vals)+'</div>';
+  h+=P.map(x=>'<h2>'+x[1]+'</h2><div class="card"><div class="ph" id="ph_'+x[0]+'"></div><input type="file" accept="image/*" multiple data-up="'+x[0]+'"></div>').join('');
+  h+='<button class="pr" data-save style="width:100%;margin:14px 0">'+(p?'حفظ التعديلات':'حفظ المريض')+'</button>';
+  if(p){
+    const mine=S.ap.filter(x=>x.pid===p.id).sort((x,y)=>x.date.localeCompare(y.date));
+    h+='<h2>مواعيد أخرى (مراجعات)</h2><div class="card">'+(mine.map(x=>'<p>'+fmt(x.date)+(x.note?' · '+esc(x.note):'')+(x.by?' · '+esc(x.by):'')+' <button class="dn sm" data-delap="'+esc(x.id)+'">حذف</button></p>').join('')||'<p class="mut">لا توجد مواعيد.</p>')+
+    '<div class="row"><input id="ad" type="date"><input id="an" placeholder="ملاحظة"></div><button class="pr" data-addap>إضافة موعد</button></div>'+
+    '<div class="card row"><button data-cal>'+(p.eventId?'تحديث التقويم ✓':'أضف العملية للتقويم')+'</button></div>'+
+    '<button class="dn" data-del>حذف المريض</button>';
+  }
+  return h;
+}
+function render(){
+  const a=$('#app');
+  $('#who').innerHTML=S.me?'<span class="mut">'+esc(who())+(S.user?' · '+esc(S.user.email):'')+'</span> <button class="sm" data-gear>⚙</button>':'';
+  if(S.screen==='auth'||!S.me){a.innerHTML=authView();return;}
+  $('#banner').innerHTML=S.demo?'<div class="demo">وضع التجربة: البيانات تُحفظ على هذا الجهاز فقط ولا تُرسل إلى جوجل.</div>':'';
+  if(S.screen==='demosheet'){a.innerHTML=demoSheetView();return;}
+  if(S.screen==='settings'){a.innerHTML=settingsView();return;}
+  if(S.screen==='login'){a.innerHTML=loginView();return;}
+  if(S.draft&&(!S.draft.pid||S.pts.find(x=>x.id===S.draft.pid))){a.innerHTML=editorView();P.forEach(x=>fillGrid(x[0]));return;}
+  S.draft=null;S.cur=null;
+  a.innerHTML=tabsHtml()+(S.tab==='p'?list():agenda());
+}
+
+/* ---------- actions ---------- */
+function fail(e){
+  if(e&&e.message==='AUTH'){S.screen='login';render();msg('انتهت الجلسة. سجّل الدخول من جديد.');return;}
+  msg('حدث خطأ: '+(e&&e.message||'غير معروف'));
+}
+let pushOn=false;
+async function saveToken(t){
+  if(!t||!S.sid||S.demo)return;
+  try{
+    const r=await J(vals(S.sid,q1(T3)+'!A2:D'));
+    const rows=r.values||[];
+    const i=rows.findIndex(x=>x[0]===t);
+    const row=[t,who(),(S.user&&S.user.email)||'',stamp()];
+    if(i>=0)await J(vals(S.sid,q1(T3)+'!A'+(i+2)+':D'+(i+2))+'?valueInputOption=RAW',put({values:[row]}));
+    else await J(vals(S.sid,q1(T3)+'!A:D')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[row]}));
+  }catch(e){}
+}
+async function registerPush(){
+  const PN=NP('PushNotifications');
+  if(!NATIVE||!PN||S.demo)return;
+  try{
+    if(!pushOn){
+      pushOn=true;
+      PN.addListener('registration',x=>{LS.set('fcm',x.value);saveToken(x.value);});
+      PN.addListener('registrationError',()=>{});
+      PN.addListener('pushNotificationReceived',n=>{msg((n.title||'')+(n.body?': '+n.body:''),true);loadAll().then(render).catch(()=>{});});
+      PN.addListener('pushNotificationActionPerformed',()=>{S.tab='a';S.draft=null;render();loadAll().then(render).catch(()=>{});});
+      try{await PN.createChannel({id:'ops',name:'العمليات والمواعيد',description:'تنبيهات المرضى والعمليات',importance:5,visibility:1,vibration:true});}catch(e){}
+    }
+    let p=await PN.checkPermissions();
+    if(p.receive!=='granted')p=await PN.requestPermissions();
+    if(p.receive!=='granted'){msg('الإشعارات غير مفعّلة. فعّلها من إعدادات الهاتف للتطبيق.');return;}
+    const old=LS.get('fcm');
+    if(old)saveToken(old);
+    await PN.register();
+  }catch(e){}
+}
+async function login(){
+  try{
+    msg('جارٍ تسجيل الدخول…',true);
+    await getToken(true);
+    const u=await J('https://www.googleapis.com/oauth2/v3/userinfo');
+    const changed=!S.user||S.user.email!==u.email;
+    if(cfg.deptEmail&&u.email.toLowerCase()!==cfg.deptEmail.trim().toLowerCase()){token=null;S.user=null;msg('سجّلت الدخول بحساب مختلف ('+u.email+'). المطلوب حساب الدائرة: '+cfg.deptEmail);return;}
+    S.user={email:u.email,name:u.name};LS.set('email',u.email);
+    if(changed||!S.sid){S.folder='';await ensure();}
+    await loadAll();
+    S.screen='app';msg('');render();
+    registerPush();
+  }catch(e){if(e.message==='AUTH')e=new Error('لم يكتمل تسجيل الدخول');msg(e.message);}
+}
+function track(e){
+  const t=e.target;if(!S.draft||!t.id||t.id.indexOf('f_')!==0)return;
+  S.draft.vals[t.id.slice(2)]=t.id==='f_notes'?t.value:t.value.trim();S.draft.dirty=true;
+}
+document.addEventListener('input',e=>{
+  track(e);
+  if(e.target.id==='aq'){S.aq=e.target.value;const pos=e.target.selectionStart;render();const i=$('#aq');if(i){i.focus();i.setSelectionRange(pos,pos);}}
+  if(e.target.id==='q'){S.q=e.target.value;const pos=e.target.selectionStart;render();const i=$('#q');if(i){i.focus();i.setSelectionRange(pos,pos);}}
+});
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-t],[data-av],[data-nav],[data-today],[data-day],[data-open],[data-login],[data-gear],[data-savecfg],[data-cancelcfg],[data-logout],[data-new],[data-cancel],[data-add],[data-save],[data-back],[data-cal],[data-addap],[data-delap],[data-del],[data-sheetlink],[data-auth],[data-mode],[data-forgot],[data-mine],[data-lbclose],[data-rm],[data-demo],[data-yes],[data-no],[data-savedoc],[data-demoreset],[data-closesheet],.pw img');
+  if(!t){if(e.target.id==='lb')$('#lb').style.display='none';return;}
+  const d=t.dataset;
+  if(d.yes!==undefined||d.no!==undefined){$('#dlg').style.display='none';if(askRes){const r=askRes;askRes=null;r(d.yes!==undefined);}return;}
+  if(d.login!==undefined){login();return;}   // must run synchronously inside the click (popup)
+  run(async()=>{
+    if(d.demo!==undefined){await enterDemo();}
+    else if(d.closesheet!==undefined){S.screen='app';render();}
+    else if(d.savedoc!==undefined){cfg.doctors=$('#s_docs').value;saveCfg();S.screen='app';msg('تم الحفظ',true);render();}
+    else if(d.demoreset!==undefined){if(!await ask('مسح كل البيانات التجريبية؟'))return;dReset();leaveDraft();await ensure();await loadAll();S.screen='app';msg('مُسحت البيانات التجريبية',true);render();}
+    else if(d.mode!==undefined){S.authMode=d.mode;msg('');render();}
+    else if(d.mine!==undefined){S.mine=!S.mine;render();}
+    else if(d.forgot!==undefined){
+      const un=($('#a_user').value||'').trim().toLowerCase(),us=getUsers();
+      if(!us[un]){msg('اكتب اسم المستخدم في الحقل أولاً');return;}
+      if(!await ask('حذف الحساب "'+un+'" من هذا الجهاز لإنشاء حساب جديد؟ بياناتك المحفوظة في جوجل لا تتأثر.'))return;
+      delete us[un];LS.set('users',JSON.stringify(us));S.authMode='reg';msg('حُذف الحساب. أنشئ حساباً جديداً.',true);render();
+    }
+    else if(d.auth!==undefined){
+      const reg=S.authMode==='reg'||!Object.keys(getUsers()).length;
+      const un=$('#a_user').value.trim().toLowerCase(),pw=$('#a_pass').value,us=getUsers();
+      if(!un||!pw){msg('اكتب اسم المستخدم وكلمة المرور');return;}
+      if(reg){
+        const nm=$('#a_name').value.trim();
+        if(!nm){msg('اكتب الاسم الكامل');return;}
+        if(!/^[a-z0-9._-]{3,}$/.test(un)){msg('اسم المستخدم: 3 أحرف أو أكثر بالإنجليزية أو الأرقام');return;}
+        if(us[un]){msg('اسم المستخدم مستخدم من قبل');return;}
+        if(pw.length<6){msg('كلمة المرور قصيرة (6 أحرف على الأقل)');return;}
+        if(pw!==$('#a_pass2').value){msg('كلمتا المرور غير متطابقتين');return;}
+        const salt=b64e(crypto.getRandomValues(new Uint8Array(16)));
+        us[un]={name:nm,salt,hash:await hashPw(pw,salt)};LS.set('users',JSON.stringify(us));
+      }else{
+        const u=us[un];
+        if(!u||await hashPw(pw,u.salt)!==u.hash){await new Promise(r=>setTimeout(r,600));msg('اسم المستخدم أو كلمة المرور غير صحيحة');return;}
+      }
+      S.me={username:un,name:us[un].name};SS.set('me',un);loadCfg(un);S.authMode='';
+      S.screen=cfg.clientId?'login':'settings';msg('');render();
+      if(DEMO_ONLY){await enterDemo();}
+    }
+    else if(d.gear!==undefined){S.screen='settings';render();}
+    else if(d.cancelcfg!==undefined){S.screen=S.user?'app':'login';render();}
+    else if(d.savecfg!==undefined){
+      const nc={deptEmail:$('#s_dept').value.trim(),clientId:$('#s_cid').value.trim(),sheetUrl:$('#s_sheet').value.trim(),calId:$('#s_cal').value.trim(),doctors:$('#s_docs').value,autoCal:$('#s_auto').checked};
+      if(!nc.clientId){msg('أدخل Client ID');return;}
+      const reset=nc.clientId!==cfg.clientId||nc.deptEmail!==cfg.deptEmail,sheetChanged=nc.sheetUrl!==cfg.sheetUrl;
+      cfg=nc;saveCfg();
+      if(reset){token=null;tc=null;S.user=null;S.sid='';S.screen='login';}
+      else if(sheetChanged&&S.user){S.screen='app';await ensure();await loadAll();}
+      else S.screen=S.user?'app':'login';
+      msg('تم حفظ الإعدادات',true);render();
+    }
+    else if(d.logout!==undefined){S.demo=false;D=null;token=null;S.user=null;S.me=null;S.sid='';S.folder='';S.pts=[];S.ap=[];leaveDraft();SS.del('me');S.screen='auth';msg('');render();}
+    else if(d.t){S.tab=d.t;render();}
+    else if(d.av){S.av=d.av;render();}
+    else if(d.today!==undefined){S.ad=ymd(new Date());render();}
+    else if(d.nav){const n=Number(d.nav),A=pd(S.ad||ymd(new Date()));if(S.av==='month'){const dd=A.getDate();A.setDate(1);A.setMonth(A.getMonth()+n);A.setDate(Math.min(dd,new Date(A.getFullYear(),A.getMonth()+1,0).getDate()));}else A.setDate(A.getDate()+7*n);S.ad=ymd(A);render();}
+    else if(d.day&&t.closest('button')){S.ad=d.day;render();}
+    else if(d.new!==undefined){startDraft(null);msg('');render();window.scrollTo(0,0);}
+    else if(d.open){const p=S.pts.find(x=>x.id===d.open);if(!p){msg('هذا السجل لم يعد موجوداً');return;}startDraft(p);msg('');render();window.scrollTo(0,0);}
+    else if(d.back!==undefined){if(S.draft&&S.draft.dirty&&!await ask('تجاهل البيانات غير المحفوظة؟'))return;leaveDraft();msg('');render();}
+    else if(d.rm!==undefined){
+      const [cat,i]=d.rm.split(':');const it=S.draft.ph[cat][Number(i)];
+      if(!await ask('إزالة هذه الصورة؟ تُحذف نهائياً عند الحفظ.'))return;
+      if(it.url)S.draft.trash.push(it.url);
+      S.draft.ph[cat].splice(Number(i),1);S.draft.dirty=true;fillGrid(cat);
+    }
+    else if(d.sheetlink!==undefined&&S.demo){S.screen='demosheet';render();window.scrollTo(0,0);}
+    else if(d.sheetlink!==undefined){window.open('https://docs.google.com/spreadsheets/d/'+S.sid,'_blank');}
+    else if(t.matches('.pw img')){if(t.src){$('#lb img').src=t.src;$('#lb').style.display='flex';}}
+    else if(d.lbclose!==undefined){$('#lb').style.display='none';}
+    else if(d.save!==undefined){await saveDraft();}
+    else if(d.cal!==undefined){
+      const p=S.pts.find(x=>x.id===S.cur);
+      if(S.draft&&S.draft.dirty){msg('احفظ التعديلات أولاً');return;}
+      if(!p.odate){msg('أدخل تاريخ العملية واحفظ أولاً');return;}
+      msg('جارٍ التحديث…',true);await syncCal(p);await loadAll();render();msg('تم تحديث التقويم',true);
+    }
+    else if(d.addap!==undefined){
+      const dt=$('#ad').value;if(!dt){msg('اختر تاريخ الموعد');return;}
+      const p=S.pts.find(x=>x.id===S.cur);
+      await J(vals(S.sid,q1(T2)+'!A:'+col(H2.length))+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[[p.name,dt,$('#an').value.trim(),p.id,uid(),who()]]}));
+      await loadAll();render();msg('');
+    }
+    else if(d.delap){
+      if(!await ask('حذف الموعد؟'))return;
+      const a=S.ap.find(x=>x.id===d.delap);if(a){await delRows(T2,[a.row]);await loadAll();render();}
+    }
+    else if(d.del!==undefined){
+      if(!await ask('حذف المريض وكل مواعيده؟'))return;
+      const p=S.pts.find(x=>x.id===S.cur);
+      if(p.eventId){try{await api('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(cfg.calId||'primary')+'/events/'+encodeURIComponent(p.eventId),{method:'DELETE'});}catch(e){if(e.message==='AUTH')throw e;}}
+      const rows=S.ap.filter(x=>x.pid===p.id).map(x=>x.row);
+      if(rows.length)await delRows(T2,rows);
+      await delRows(T1,[p.row]);
+      leaveDraft();await loadAll();render();msg('حُذف المريض',true);
+    }
+  });
+});
+document.addEventListener('change',e=>{
+  track(e);
+  const k=e.target.dataset&&e.target.dataset.up;if(!k||!S.draft)return;
+  const files=Array.from(e.target.files||[]);if(!files.length)return;
+  files.forEach(f=>S.draft.ph[k].push({file:f,preview:URL.createObjectURL(f)}));
+  S.draft.dirty=true;e.target.value='';fillGrid(k);
+});
+async function run(fn){try{await fn();}catch(e){fail(e);}}
+(function init(){
+  const un=SS.get('me'),u=un&&getUsers()[un];
+  if(u){S.me={username:un,name:u.name};loadCfg(un);S.screen=cfg.clientId?'login':'settings';}
+  else S.screen='auth';
+  render();
+  if(u&&DEMO_ONLY)enterDemo().catch(fail);
+})();
+initNative();
+</script>
+</body>
+</html>
