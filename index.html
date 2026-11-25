@@ -375,6 +375,7 @@ function leaveDraft(){S.draft=null;S.cur=null;}
 async function saveDraft(){
   const d=S.draft;
   syncVals();
+  d.vals.op=canonOp(d.vals.op);
   const o=d.vals,c=check(o);if(c.err){msg(c.err);return;}
   if(d.pid&&!S.pts.find(x=>x.id===d.pid))await loadAll();
   let todo=0;P.forEach(x=>d.ph[x[0]].forEach(it=>{if(!it.url)todo++;}));
@@ -452,10 +453,14 @@ function settingsView(){
   '<p><button class="dn" data-logout>تسجيل الخروج من التطبيق</button></p></div>';
 }
 const tabsHtml=()=>'<div class="tabs"><button data-t="p" class="'+(S.tab==='p'?'on':'')+'">المرضى</button><button data-t="a" class="'+(S.tab==='a'?'on':'')+'">الأجندة</button></div>';
+const normOp=s=>String(s||'').replace(/\s+/g,' ').trim();
+function opNames(){const m={};S.pts.forEach(p=>{const n=normOp(p.op);if(n)m[n]=(m[n]||0)+1;});return Object.keys(m).sort((a,b)=>m[b]-m[a]||a.localeCompare(b,'ar'));}
+function canonOp(s){const n=normOp(s);const k=n.toLowerCase();return opNames().find(x=>x.toLowerCase()===k)||n;}
 function form(v){
   return FIELDS().map(f=>{
     const k=f[0],val=v[k]||'',id='f_'+k,lab='<label>'+f[1]+(f[3]?' *':'')+'</label>';
     if(f[2]==='sel'){const opts=f[4].slice();if(val&&!opts.some(o=>o[0]===val))opts.push([val,val]);return lab+'<select id="'+id+'"><option value="">اختر</option>'+opts.map(o=>'<option value="'+esc(o[0])+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select>';}
+    if(k==='op')return lab+'<input id="'+id+'" type="text" value="'+esc(val)+'" list="oplist" autocomplete="off"><datalist id="oplist">'+opNames().map(x=>'<option value="'+esc(x)+'">').join('')+'</datalist>';
     return lab+'<input id="'+id+'" type="'+f[2]+'" value="'+esc(val)+'">';
   }).join('')+'<label>ملاحظات</label><textarea id="f_notes" rows="3">'+esc(v.notes)+'</textarea>';
 }
