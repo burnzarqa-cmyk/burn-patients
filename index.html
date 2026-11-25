@@ -292,7 +292,7 @@ async function loadAll(){
   S.ap=ap;
 }
 const savePatient=p=>{p.editBy=who();p.editAt=stamp();return J(vals(S.sid,q1(T1)+'!A'+p.row+':'+col(H1.length)+p.row)+'?valueInputOption=RAW',put({values:[toRow(p)]}));};
-const addPatient=async o=>{const p=Object.assign({inv:[],cond:[],before:[],after:[]},o,{id:uid(),created:Date.now(),eventId:'',by:who(),editBy:who(),editAt:stamp()});await J(vals(S.sid,q1(T1)+'!A:'+col(H1.length))+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[toRow(p)]}));return p;};
+const addPatient=async o=>{const p=Object.assign({inv:[],cond:[],before:[],after:[]},o,{id:o.id||uid(),created:Date.now(),eventId:'',by:who(),editBy:who(),editAt:stamp()});await J(vals(S.sid,q1(T1)+'!A:'+col(H1.length))+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[toRow(p)]}));return p;};
 const delRows=(t,rows)=>J(sh(S.sid)+':batchUpdate',post({requests:rows.sort((a,b)=>b-a).map(r=>({deleteDimension:{range:{sheetId:S.gid[t],dimension:'ROWS',startIndex:r-1,endIndex:r}}}))}));
 
 /* ---------- calendar ---------- */
@@ -310,6 +310,25 @@ async function syncCal(p){
   if(!ev)ev=await J(base,post(body));
   if(ev.id!==p.eventId){p.eventId=ev.id;await savePatient(p);}
   return true;
+}
+
+/* ---------- Drive hierarchy: صور المرضى > <operation> > <patient> > photos ---------- */
+const DF='https://www.googleapis.com/drive/v3/files',FMIME='application/vnd.google-apps.folder';
+const FQ=s=>String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+const cleanName=(s,d)=>String(s||'').replace(/[\/\\]/g,'-').replace(/\s+/g,' ').trim()||d;
+async function findFolder(q){const l=await J(DF+'?q='+encodeURIComponent(q)+'&fields=files(id)&pageSize=1');return l.files&&l.files[0]&&l.files[0].id;}
+async function opFolder(root,op){
+  const name=cleanName(op,'بدون عملية');
+  const f=await findFolder("mimeType='"+FMIME+"' and trashed=false and '"+root+"' in parents and name='"+FQ(name)+"'");
+  if(f)return f;
+  return (await J(DF+'?fields=id',post({name,mimeType:FMIME,parents:[root]}))).id;
+}
+async function patientFolder(pid,pname,op){
+  if(S.demo)return 'demofolder';
+  const f=await findFolder("mimeType='"+FMIME+"' and trashed=false and appProperties has { key='pid' and value='"+FQ(pid)+"' }");
+  if(f)return f;
+  const root=await ensureFolder(),parent=await opFolder(root,op);
+  return (await J(DF+'?fields=id',post({name:cleanName(pname,'مريض'),mimeType:FMIME,parents:[parent],appProperties:{pid}}))).id;
 }
 
 /* ---------- photos ---------- */
@@ -340,7 +359,7 @@ function FIELDS(){return [['name','اسم المريض','text',1],['email','ال
 function startDraft(p){
   const vals={};FIELDS().forEach(f=>{vals[f[0]]=p&&p[f[0]]||'';});vals.notes=p&&p.notes||'';
   const ph={};P.forEach(x=>{ph[x[0]]=((p&&p[x[0]])||[]).map(u=>({url:u}));});
-  S.draft={pid:p?p.id:null,vals,ph,trash:[],dirty:false};S.cur=S.draft.pid;
+  S.draft={pid:p?p.id:null,newId:'',vals,ph,trash:[],dirty:false};S.cur=S.draft.pid;
 }
 function syncVals(){
   const v=S.draft.vals;
@@ -361,7 +380,8 @@ async function saveDraft(){
   let todo=0;P.forEach(x=>d.ph[x[0]].forEach(it=>{if(!it.url)todo++;}));
   let n=0;
   if(todo){
-    const folder=await ensureFolder();
+    if(!d.pid&&!d.newId)d.newId=uid();
+    const folder=await patientFolder(d.pid||d.newId,o.name,o.op);
     for(const x of P){
       for(const it of d.ph[x[0]]){
         if(it.url)continue;
@@ -378,7 +398,7 @@ async function saveDraft(){
     const p=Object.assign(S.pts.find(x=>x.id===pid),o,ph);
     await savePatient(p);
   }else{
-    const p=await addPatient(Object.assign({},o,ph));
+    const p=await addPatient(Object.assign({},o,ph,d.newId?{id:d.newId}:{}));
     pid=d.pid=p.id;S.cur=pid;
   }
   await loadAll();
