@@ -84,12 +84,12 @@ const rev=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[v,k]));
 const OTr=rev(OT),OSr=rev(OS);
 const P=[['inv','صور الفحوصات والأشعة والاستشارات'],['cond','صور الحالة المرضية'],['before','صور قبل العملية'],['after','صور بعد العملية']];
 const DEMO_ONLY=false;
-const DEF={clientId:'',deptEmail:'',sheetUrl:'',calId:'',autoCal:true,doctors:'د غيث مساعدة، د أكرم عبوي، د معتز قسايمة، د اياد صوالحة'};
+const DEF={clientId:'704558469211-suob2ej025cga58elgcegdjs4gl59g9i.apps.googleusercontent.com',deptEmail:'burnzarqa@gmail.com',sheetUrl:'',calId:'',autoCal:true,doctors:'د غيث مساعدة، د أكرم عبوي، د معتز قسايمة، د اياد صوالحة'};
 
 const MEM={};
 const LS={get(k){try{const v=localStorage.getItem(k);return v==null?(MEM[k]==null?null:MEM[k]):v}catch(e){return MEM[k]==null?null:MEM[k]}},set(k,v){MEM[k]=v;try{localStorage.setItem(k,v)}catch(e){}}};
 let cfg=Object.assign({},DEF);
-function loadCfg(u){let c={};try{c=JSON.parse(LS.get('cfg_'+u)||LS.get('cfg_default')||'{}')}catch(e){}cfg=Object.assign({},DEF,c);}
+function loadCfg(u){let c={};try{c=JSON.parse(LS.get('cfg_'+u)||LS.get('cfg_default')||'{}')}catch(e){}cfg=Object.assign({},DEF,c);if(!cfg.clientId)cfg.clientId=DEF.clientId;if(!cfg.deptEmail)cfg.deptEmail=DEF.deptEmail;}
 function saveCfg(){const j=JSON.stringify(cfg);LS.set('cfg_'+S.me.username,j);LS.set('cfg_default',j);}
 const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
 /* local app accounts (identification only; Google sign-in is the real gate to the data) */
@@ -533,7 +533,7 @@ function settingsView(){
   return '<div class="card"><h2>الإعدادات</h2>'+(first?'<p>قبل الدخول أدخل Client ID الخاص بالتطبيق (من Google Cloud).</p>':'')+
   '<label>عنوان التطبيق الحالي (أضفه في Authorized JavaScript origins)</label><p><code>'+esc(location.origin)+'</code></p>'+
   '<label>بريد حساب جوجل الخاص بالدائرة</label><input id="s_dept" dir="ltr" type="email" value="'+esc(cfg.deptEmail)+'" placeholder="burnzarqa@gmail.com">'+
-  '<label>Client ID</label><input id="s_cid" dir="ltr" value="'+esc(cfg.clientId)+'" placeholder="xxxx.apps.googleusercontent.com">'+
+  '<label>Client ID</label><input id="s_cid" dir="ltr" autocapitalize="none" autocorrect="off" autocomplete="off" spellcheck="false" value="'+esc(cfg.clientId)+'" placeholder="xxxx.apps.googleusercontent.com">'+
   '<label>رابط جوجل شيت (اتركه فارغاً لإنشاء شيت تلقائياً)</label><input id="s_sheet" dir="ltr" value="'+esc(cfg.sheetUrl)+'" placeholder="https://docs.google.com/spreadsheets/d/...">'+
   '<label>التقويم (اتركه فارغاً للتقويم الرئيسي، أو اكتب بريد التقويم)</label><input id="s_cal" dir="ltr" value="'+esc(cfg.calId)+'">'+
   '<label>الأطباء (افصل بينهم بفاصلة)</label><textarea id="s_docs" rows="2">'+esc(cfg.doctors)+'</textarea>'+
@@ -762,7 +762,7 @@ document.addEventListener('click',e=>{
     else if(d.gear!==undefined){S.screen='settings';render();}
     else if(d.cancelcfg!==undefined){S.screen=S.user?'app':'login';render();}
     else if(d.savecfg!==undefined){
-      const nc={deptEmail:$('#s_dept').value.trim(),clientId:$('#s_cid').value.trim(),sheetUrl:$('#s_sheet').value.trim(),calId:$('#s_cal').value.trim(),doctors:$('#s_docs').value,autoCal:$('#s_auto').checked};
+      const nc={deptEmail:$('#s_dept').value.trim(),clientId:$('#s_cid').value.replace(/\s+/g,''),sheetUrl:$('#s_sheet').value.trim(),calId:$('#s_cal').value.trim(),doctors:$('#s_docs').value,autoCal:$('#s_auto').checked};
       if(!nc.clientId){msg('أدخل Client ID');return;}
       const reset=nc.clientId!==cfg.clientId||nc.deptEmail!==cfg.deptEmail,sheetChanged=nc.sheetUrl!==cfg.sheetUrl;
       cfg=nc;saveCfg();
