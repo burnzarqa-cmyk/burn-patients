@@ -103,7 +103,7 @@ const who=()=>S.me?(S.me.name||S.me.username):'';
 const stamp=()=>{const d=new Date();return ymd(d)+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');};
 const docs=()=>cfg.doctors.split(/[،,\n]/).map(s=>s.trim()).filter(Boolean);
 
-const S={screen:'auth',demo:false,me:null,authMode:'',mine:false,user:null,sid:'',gid:{},folder:'',pts:[],ap:[],cur:null,tab:'p',q:'',adding:false,lb:null};
+const S={screen:'auth',demo:false,me:null,authMode:'',mine:false,user:null,sid:'',gid:{},folder:'',pts:[],ap:[],cur:null,tab:'a',q:'',adding:false,lb:null};
 let token=null,tokenExp=0,tc=null,tcCid='',pend=null;
 
 const $=s=>document.querySelector(s);
@@ -541,7 +541,7 @@ function settingsView(){
   '<div class="row" style="margin-top:12px"><button class="pr" data-savecfg>حفظ</button>'+(first?'':'<button data-cancelcfg>إلغاء</button>')+'</div>'+
   '<p><button class="dn" data-logout>تسجيل الخروج من التطبيق</button></p></div>';
 }
-const tabsHtml=()=>'<div class="tabs"><button data-t="p" class="'+(S.tab==='p'?'on':'')+'">المرضى</button><button data-t="a" class="'+(S.tab==='a'?'on':'')+'">الأجندة</button></div>';
+const tabsHtml=()=>'<div class="tabs"><button data-t="a" class="'+(S.tab==='a'?'on':'')+'">الأجندة</button><button data-t="p" class="'+(S.tab==='p'?'on':'')+'">المرضى</button></div>';
 const normOp=s=>String(s||'').replace(/\s+/g,' ').trim();
 function opNames(){const m={};S.pts.forEach(p=>{const n=normOp(p.op);if(n)m[n]=(m[n]||0)+1;});return Object.keys(m).sort((a,b)=>m[b]-m[a]||a.localeCompare(b,'ar'));}
 function canonOp(s){const n=normOp(s);const k=n.toLowerCase();return opNames().find(x=>x.toLowerCase()===k)||n;}
@@ -562,16 +562,24 @@ function check(o){
 }
 function list(){
   const q=S.q;
-  const f=S.pts.filter(p=>(!S.mine||p.by===who())&&[p.name,p.ref,p.nid,p.phone,p.dx,p.op,p.doc].some(v=>(v||'').includes(q))).sort((x,y)=>(Number(y.created)||0)-(Number(x.created)||0));
+  const f=S.pts.filter(p=>(!S.mine||p.by===who())&&[p.name,p.ref,p.nid,p.phone,p.dx,p.op,p.doc].some(v=>(v||'').includes(q))).sort((x,y)=>(y.odate||'').localeCompare(x.odate||'')||(Number(y.created)||0)-(Number(x.created)||0));
+  const card=p=>'<div class="card item" data-open="'+esc(p.id)+'"><b>'+esc(p.name)+'</b><span class="mut">العمر: '+esc(p.age)+' · '+esc(p.op||'-')+(p.by?' · أدخله: '+esc(p.by):'')+'</span></div>';
+  let body='',lastM='',lastD='#';
+  f.forEach(p=>{
+    const d=p.odate||'',m=d?MN[pd(d).getMonth()]+' '+pd(d).getFullYear():'بدون تاريخ عملية';
+    if(m!==lastM){body+='<h2>'+m+'</h2>';lastM=m;lastD='#';}
+    if(d&&d!==lastD){body+='<div class="mut" style="margin:8px 4px 2px">'+fmt(d)+'</div>';lastD=d;}
+    body+=card(p);
+  });
   return '<div class="row"><button class="pr" data-new>+ مريض جديد</button><button data-sheetlink>فتح الشيت</button><button data-mine>'+(S.mine?'ما أدخلته أنا ✓':'عرض: الكل')+'</button></div><input id="q" placeholder="ابحث بالاسم أو الرقم الوطني أو الهاتف أو المرجع أو التشخيص أو العملية" value="'+esc(q)+'">'+
-  (f.map(p=>'<div class="card item" data-open="'+esc(p.id)+'"><b>'+esc(p.name)+'</b><span class="mut">العمر: '+esc(p.age)+' · '+esc(p.op||'-')+(p.odate?' · '+esc(p.odate):'')+(p.by?' · أدخله: '+esc(p.by):'')+'</span></div>').join('')||'<p class="mut">لا يوجد مرضى.</p>');
+  (body||'<p class="mut">لا يوجد مرضى.</p>');
 }
 const MN=['كانون الثاني','شباط','آذار','نيسان','أيار','حزيران','تموز','آب','أيلول','تشرين الأول','تشرين الثاني','كانون الأول'];
 const WD=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 const pd=d=>new Date(d+'T00:00:00');
 function agenda(){
   const today=ymd(new Date());
-  if(!S.av)S.av='list';
+  if(!S.av)S.av='month';
   if(!S.ad)S.ad=today;
   const ops=S.pts.filter(p=>p.odate).map(p=>({pid:p.id,name:p.name,date:p.odate,ty:p.otype,note:'عملية: '+(p.op||'')+(p.ostat?' ('+OS[p.ostat]+')':'')}));
   const s=ops.concat(S.ap.map(x=>Object.assign({ty:'ap'},x))).sort((x,y)=>(x.date||'').localeCompare(y.date||''));
