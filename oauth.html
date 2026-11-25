@@ -2,5 +2,5 @@
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>العودة إلى التطبيق</title>
 <style>body{font-family:system-ui,sans-serif;text-align:center;padding:40px 16px;background:#f4f6f8;color:#17212b}a{display:inline-block;margin-top:16px;padding:12px 20px;background:#0f766e;color:#fff;border-radius:10px;text-decoration:none}</style></head>
 <body><p>جارٍ العودة إلى التطبيق…</p><a id="a" href="#">افتح التطبيق</a>
-<script>var u='burnzarqa://oauth'+(location.hash||('?'+location.search.slice(1)));document.getElementById('a').href=u;location.replace(u);</script>
+<script>if(/state=web_/.test(location.hash)){location.replace('index.html'+location.hash);}else{var u='burnzarqa://oauth'+(location.hash||('?'+location.search.slice(1)));document.getElementById('a').href=u;location.replace(u);}</script>
 </body></html>
