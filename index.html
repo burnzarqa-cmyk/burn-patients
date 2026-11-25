@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="مرضاي">
 <title>ملفات المرضى</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
 <style>
 :root{--bg:#f4f6f8;--card:#fff;--tx:#17212b;--mut:#667085;--pr:#0f766e;--prt:#fff;--bd:#dfe4e9;--dn:#b42318;--ok:#067647}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151b;--card:#1a222b;--tx:#e8edf2;--mut:#98a2b3;--pr:#2dd4bf;--prt:#06201d;--bd:#2b3640;--dn:#f97066;--ok:#47cd89;color-scheme:dark}}
@@ -36,6 +38,7 @@ input[type=checkbox]{width:auto;margin:0 0 0 8px}
 #msg{min-height:22px;color:var(--dn)}#msg.ok{color:var(--ok)}
 #dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}#dlg .card{width:100%;max-width:360px}
 #upd .upd{background:var(--card);border:2px solid var(--pr);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:14px;display:flex;flex-direction:column;gap:8px}#upd .upd .row{display:flex;gap:8px}#upd .upd .row button{flex:1}
+#web .upd{background:var(--card);border:2px solid var(--pr);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:14px;display:flex;flex-direction:column;gap:8px}#web .upd .row{display:flex;gap:8px}#web .upd .row button{flex:1}
 #banner .demo{background:#fef0c7;color:#7a2e0e;border-radius:10px;padding:8px 12px;margin:6px 0;font-size:14px}
 .tbl{overflow:auto;border:1px solid var(--bd);border-radius:10px;background:var(--card)}.tbl table{border-collapse:collapse;font-size:13px;white-space:nowrap}.tbl th,.tbl td{border:1px solid var(--bd);padding:4px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis}.tbl th{background:var(--bd)}
 code{background:var(--bd);padding:2px 6px;border-radius:6px;direction:ltr;unicode-bidi:embed;word-break:break-all}
@@ -58,6 +61,7 @@ a.btn{display:block;text-align:center;text-decoration:none;color:var(--tx);borde
 <main>
 <div class="top"><h1>ملفات المرضى</h1><div id="who"></div></div>
 <div id="upd"></div>
+<div id="web"></div>
 <div id="banner"></div>
 <div id="msg"></div>
 <div id="app"></div>
@@ -73,7 +77,7 @@ const REDIRECT_URI='__REDIRECT_URI__',NATIVE_SCHEME='burnzarqa';
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 const NP=n=>(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins[n])||null;
 const H1=['اسم المريض','البريد الإلكتروني','العمر','رقم الاتصال','الرقم الوطني','التشخيص','اسم العملية','الطبيب المعالج','نوع العملية','تاريخ العملية','حالة العملية','ملاحظات','المرجع','روابط صور الفحوصات والأشعة والاستشارات','روابط صور الحالة المرضية','روابط صور قبل العملية','روابط صور بعد العملية','المعرّف','معرّف حدث التقويم','تاريخ الإنشاء','أدخله','آخر تعديل بواسطة','آخر تعديل في'];
-const H3=['رمز الجهاز','المستخدم','البريد','آخر تحديث'];
+const H3=['رمز الجهاز','المستخدم','البريد','آخر تحديث','المنصة'];
 const H2=['اسم المريض','التاريخ','ملاحظة','معرّف المريض','المعرّف','أضافه'];
 const OT={major:'رئيسية',daily:'يومية'},OS={post:'مؤجلة',cancelled:'ملغاة',done:'تمت'};
 const rev=o=>Object.fromEntries(Object.entries(o).map(([k,v])=>[v,k]));
@@ -160,8 +164,72 @@ function initNative(){
   checkUpdate();
   if(B)B.addListener('browserFinished',()=>{setTimeout(()=>{if(nPend){const pe=nPend;nPend=null;pe.rej(new Error(pe.interactive?'لم يكتمل تسجيل الدخول':'AUTH'));}},800);});
 }
+/* ---------- iPhone / web app (home-screen web app) ---------- */
+const IOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const STANDALONE=navigator.standalone===true||!!(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+const WEBREDIRECT=!NATIVE&&IOS;
+const FBCFG={apiKey:'AIzaSyA8S50T0yWcD8yFbQpBNBMmCFOQ1eK1Y58',authDomain:'burn-patients.firebaseapp.com',projectId:'burn-patients',storageBucket:'burn-patients.firebasestorage.app',messagingSenderId:'704558469211',appId:'1:704558469211:web:b848f515a69038d65b6f7e'};
+const VAPID='BJCFyOh8TJYwJoST8iq5lP8tI04Oo50Omtlsm1bdqHlGan1sfDj-xumQsslEl_w4I61uZ-uoAZ_pKzPYf3A7hr0';
+function webRestore(){
+  try{
+    const h=new URLSearchParams(location.hash.slice(1));
+    if(String(h.get('state')||'').indexOf('web_')===0){
+      history.replaceState(null,'',location.pathname+location.search);
+      if(h.get('access_token')){token=h.get('access_token');tokenExp=Date.now()+(Number(h.get('expires_in'))||3600)*1000;LS.set('wtok',JSON.stringify({t:token,e:tokenExp}));return true;}
+    }
+    const o=JSON.parse(LS.get('wtok')||'null');
+    if(o&&o.t&&o.e>Date.now()+60000){token=o.t;tokenExp=o.e;return true;}
+  }catch(e){}
+  return false;
+}
+function webToken(interactive){
+  if(!token)webRestore();
+  if(token&&Date.now()<tokenExp-60000)return Promise.resolve(token);
+  if(!interactive)return Promise.reject(new Error('AUTH'));
+  if(!cfg.clientId)return Promise.reject(new Error('أدخل Client ID من الإعدادات'));
+  const hint=cfg.deptEmail||(S.user&&S.user.email)||LS.get('email')||'';
+  try{if(S.draft){syncVals();SS.set('wdraft',JSON.stringify({pid:S.draft.pid,vals:S.draft.vals}));}}catch(e){}
+  const p=new URLSearchParams({client_id:cfg.clientId,redirect_uri:REDIRECT_URI,response_type:'token',scope:SCOPE,state:'web_'+uid(),include_granted_scopes:'true'});
+  if(hint)p.set('login_hint',hint);else p.set('prompt','select_account');
+  location.href='https://accounts.google.com/o/oauth2/v2/auth?'+p.toString();
+  return new Promise(()=>{});
+}
+let fbm=null;
+const loadScript=src=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=src;e.onload=ok;e.onerror=()=>no(new Error('تعذّر تحميل خدمة الإشعارات'));document.head.appendChild(e);});
+const webPushOk=()=>!NATIVE&&!S.demo&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&(!IOS||STANDALONE);
+async function enableWebPush(interactive){
+  try{
+    if(!webPushOk())return false;
+    if(Notification.permission==='denied'){if(interactive)msg('الإشعارات محظورة. فعّلها من إعدادات الآيفون للتطبيق.');return false;}
+    if(Notification.permission!=='granted'){
+      if(!interactive)return false;
+      if(await Notification.requestPermission()!=='granted'){msg('لم تُفعَّل الإشعارات.');return false;}
+    }
+    if(!fbm){
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+      firebase.initializeApp(FBCFG);fbm=firebase.messaging();
+      fbm.onMessage(n=>{const x=n.notification||{};msg((x.title||'')+(x.body?': '+x.body:''),true);loadAll().then(render).catch(()=>{});});
+    }
+    const reg=await navigator.serviceWorker.register('firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+    const t=await fbm.getToken({vapidKey:VAPID,serviceWorkerRegistration:reg});
+    if(t){LS.set('fcmw',t);await saveToken(t,'web');if(interactive)msg('تم تفعيل الإشعارات.',true);return true;}
+  }catch(e){if(interactive)msg('تعذّر تفعيل الإشعارات: '+e.message);}
+  return false;
+}
+function showWeb(){
+  const e=$('#web');if(!e)return;
+  let h='';
+  if(!NATIVE&&!S.demo){
+    if(IOS&&!STANDALONE&&!LS.get('wpx'))h='<div class="upd"><b>ثبّت التطبيق على الآيفون</b><div>من سفاري اضغط زر المشاركة (المربع والسهم) ثم «إضافة إلى الشاشة الرئيسية»، وبعدها افتحه من الأيقونة.</div><div class="row"><button data-wpx>تم</button></div></div>';
+    else if(S.me&&S.screen==='app'&&webPushOk()&&Notification.permission==='default')h='<div class="upd"><b>فعّل الإشعارات</b><div>لتصلك تنبيهات المرضى والعمليات على هذا الجهاز.</div><div class="row"><button class="pr" data-wp>تفعيل الإشعارات</button></div></div>';
+  }
+  e.innerHTML=h;
+}
 function getToken(interactive){
   if(NATIVE)return nativeToken(interactive);
+  if(WEBREDIRECT)return webToken(interactive);
   return new Promise((res,rej)=>{
     if(token&&Date.now()<tokenExp-60000&&!interactive)return res(token);
     if(!window.google||!google.accounts||!google.accounts.oauth2)return rej(new Error('تعذّر تحميل خدمة جوجل. تأكد من الاتصال بالإنترنت.'));
@@ -570,6 +638,7 @@ function editorView(){
 }
 function render(){
   const a=$('#app');
+  showWeb();
   $('#who').innerHTML=S.me?'<span class="mut">'+esc(who())+(S.user?' · '+esc(S.user.email):'')+'</span> <button class="sm" data-gear>⚙</button>':'';
   if(S.screen==='auth'||!S.me){a.innerHTML=authView();return;}
   $('#banner').innerHTML=S.demo?'<div class="demo">وضع التجربة: البيانات تُحفظ على هذا الجهاز فقط ولا تُرسل إلى جوجل.</div>':'';
@@ -587,20 +656,21 @@ function fail(e){
   msg('حدث خطأ: '+(e&&e.message||'غير معروف'));
 }
 let pushOn=false;
-async function saveToken(t){
+async function saveToken(t,plat){
   if(!t||!S.sid||S.demo)return;
   try{
-    const r=await J(vals(S.sid,q1(T3)+'!A2:D'));
+    const r=await J(vals(S.sid,q1(T3)+'!A2:E'));
     const rows=r.values||[];
     const i=rows.findIndex(x=>x[0]===t);
-    const row=[t,who(),(S.user&&S.user.email)||'',stamp()];
-    if(i>=0)await J(vals(S.sid,q1(T3)+'!A'+(i+2)+':D'+(i+2))+'?valueInputOption=RAW',put({values:[row]}));
-    else await J(vals(S.sid,q1(T3)+'!A:D')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[row]}));
+    const row=[t,who(),(S.user&&S.user.email)||'',stamp(),plat||'android'];
+    if(i>=0)await J(vals(S.sid,q1(T3)+'!A'+(i+2)+':E'+(i+2))+'?valueInputOption=RAW',put({values:[row]}));
+    else await J(vals(S.sid,q1(T3)+'!A:E')+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',post({values:[row]}));
   }catch(e){}
 }
 async function registerPush(){
+  if(!NATIVE){enableWebPush(false).then(showWeb);return;}
   const PN=NP('PushNotifications');
-  if(!NATIVE||!PN||S.demo)return;
+  if(!PN||S.demo)return;
   try{
     if(!pushOn){
       pushOn=true;
@@ -628,7 +698,11 @@ async function login(){
     S.user={email:u.email,name:u.name};LS.set('email',u.email);
     if(changed||!S.sid){S.folder='';await ensure();}
     await loadAll();
-    S.screen='app';msg('');render();
+    S.screen='app';msg('');
+    let back=false;
+    try{const w=JSON.parse(SS.get('wdraft')||'null');if(w){SS.del('wdraft');startDraft(w.pid?S.pts.find(x=>x.id===w.pid)||null:null);Object.assign(S.draft.vals,w.vals);back=true;}}catch(e){}
+    render();
+    if(back)msg('عدنا بعد تسجيل الدخول. أعد إضافة الصور إن وُجدت ثم احفظ.',true);
     registerPush();
   }catch(e){if(e.message==='AUTH')e=new Error('لم يكتمل تسجيل الدخول');msg(e.message);}
 }
@@ -642,9 +716,11 @@ document.addEventListener('input',e=>{
   if(e.target.id==='q'){S.q=e.target.value;const pos=e.target.selectionStart;render();const i=$('#q');if(i){i.focus();i.setSelectionRange(pos,pos);}}
 });
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-t],[data-av],[data-nav],[data-today],[data-day],[data-open],[data-login],[data-gear],[data-savecfg],[data-cancelcfg],[data-logout],[data-new],[data-cancel],[data-add],[data-save],[data-back],[data-cal],[data-addap],[data-delap],[data-del],[data-sheetlink],[data-auth],[data-mode],[data-forgot],[data-mine],[data-lbclose],[data-rm],[data-demo],[data-yes],[data-no],[data-savedoc],[data-demoreset],[data-closesheet],[data-upd],[data-updx],.pw img');
+  const t=e.target.closest('[data-t],[data-av],[data-nav],[data-today],[data-day],[data-open],[data-login],[data-gear],[data-savecfg],[data-cancelcfg],[data-logout],[data-new],[data-cancel],[data-add],[data-save],[data-back],[data-cal],[data-addap],[data-delap],[data-del],[data-sheetlink],[data-auth],[data-mode],[data-forgot],[data-mine],[data-lbclose],[data-rm],[data-demo],[data-yes],[data-no],[data-savedoc],[data-demoreset],[data-closesheet],[data-upd],[data-updx],[data-wp],[data-wpx],.pw img');
   if(!t){if(e.target.id==='lb')$('#lb').style.display='none';return;}
   const d=t.dataset;
+  if(d.wp!==undefined){enableWebPush(true).then(showWeb);return;}
+  if(d.wpx!==undefined){LS.set('wpx','1');showWeb();return;}
   if(d.upd!==undefined){doUpdate();return;}
   if(d.updx!==undefined){updHide=true;showUpd();return;}
   if(d.yes!==undefined||d.no!==undefined){$('#dlg').style.display='none';if(askRes){const r=askRes;askRes=null;r(d.yes!==undefined);}return;}
@@ -756,6 +832,7 @@ async function run(fn){try{await fn();}catch(e){fail(e);}}
   else S.screen='auth';
   render();
   if(u&&DEMO_ONLY)enterDemo().catch(fail);
+  else if(u&&WEBREDIRECT&&cfg.clientId&&webRestore())login();
 })();
 initNative();
 </script>
