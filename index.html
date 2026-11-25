@@ -73,7 +73,8 @@ a.btn{display:block;text-align:center;text-decoration:none;color:var(--tx);borde
 'use strict';
 const SCOPE='openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/calendar.events';
 const DB_NAME='قاعدة بيانات المرضى',FOLDER_NAME='صور المرضى',T1='المرضى',T2='المواعيد',T3='الأجهزة';
-const REDIRECT_URI='__REDIRECT_URI__',NATIVE_SCHEME='burnzarqa';
+const RU0='__REDIRECT_URI__',NATIVE_SCHEME='burnzarqa';
+const REDIRECT_URI=RU0.indexOf('__')===0?location.origin+location.pathname.replace(/[^/]*$/,'')+'oauth.html':RU0;
 const NATIVE=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 const NP=n=>(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins[n])||null;
 const H1=['اسم المريض','البريد الإلكتروني','العمر','رقم الاتصال','الرقم الوطني','التشخيص','اسم العملية','الطبيب المعالج','نوع العملية','تاريخ العملية','حالة العملية','ملاحظات','المرجع','روابط صور الفحوصات والأشعة والاستشارات','روابط صور الحالة المرضية','روابط صور قبل العملية','روابط صور بعد العملية','المعرّف','معرّف حدث التقويم','تاريخ الإنشاء','أدخله','آخر تعديل بواسطة','آخر تعديل في'];
