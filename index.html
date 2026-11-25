@@ -35,6 +35,7 @@ input[type=checkbox]{width:auto;margin:0 0 0 8px}
 #lb img{max-width:96%;max-height:80%}
 #msg{min-height:22px;color:var(--dn)}#msg.ok{color:var(--ok)}
 #dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}#dlg .card{width:100%;max-width:360px}
+#upd .upd{background:var(--card);border:2px solid var(--pr);border-radius:12px;padding:10px 12px;margin:6px 0;font-size:14px;display:flex;flex-direction:column;gap:8px}#upd .upd .row{display:flex;gap:8px}#upd .upd .row button{flex:1}
 #banner .demo{background:#fef0c7;color:#7a2e0e;border-radius:10px;padding:8px 12px;margin:6px 0;font-size:14px}
 .tbl{overflow:auto;border:1px solid var(--bd);border-radius:10px;background:var(--card)}.tbl table{border-collapse:collapse;font-size:13px;white-space:nowrap}.tbl th,.tbl td{border:1px solid var(--bd);padding:4px 8px;max-width:220px;overflow:hidden;text-overflow:ellipsis}.tbl th{background:var(--bd)}
 code{background:var(--bd);padding:2px 6px;border-radius:6px;direction:ltr;unicode-bidi:embed;word-break:break-all}
@@ -56,6 +57,7 @@ a.btn{display:block;text-align:center;text-decoration:none;color:var(--tx);borde
 <body>
 <main>
 <div class="top"><h1>ملفات المرضى</h1><div id="who"></div></div>
+<div id="upd"></div>
 <div id="banner"></div>
 <div id="msg"></div>
 <div id="app"></div>
@@ -125,6 +127,23 @@ function nativeToken(interactive){
     B.open({url:'https://accounts.google.com/o/oauth2/v2/auth?'+p.toString()}).catch(e=>{nPend=null;rej(e);});
   });
 }
+/* ---------- in-app update (version.json on GitHub Pages, published only after approval) ---------- */
+const UPD_URL=REDIRECT_URI.replace(/oauth\.html.*$/,'version.json');
+let updInfo=null,updHide=false;
+function showUpd(){
+  const e=$('#upd');if(!e)return;const v=updInfo;
+  e.innerHTML=v&&!updHide?'<div class="upd"><b>يتوفر تحديث جديد'+(v.name?' ('+esc(v.name)+')':'')+'</b>'+(v.notes?'<div>'+esc(v.notes)+'</div>':'')+'<div class="row"><button class="pr" data-upd>تحديث الآن</button><button data-updx>لاحقاً</button></div><div class="mut">اضغط تحديث الآن، ثم افتح الملف الذي نزل وثبّته: يحل مكان القديم وبياناتك تبقى.</div></div>':'';
+}
+async function checkUpdate(){
+  const A=NP('App');if(!NATIVE||!A||S.demo)return;
+  try{
+    const cur=Number((await A.getInfo()).build)||0;
+    const r=await fetch(UPD_URL+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;
+    const v=await r.json();
+    updInfo=Number(v.code)>cur&&v.url?v:null;showUpd();
+  }catch(e){}
+}
+function doUpdate(){const B=NP('Browser');if(updInfo&&B)B.open({url:updInfo.url}).catch(()=>{});}
 function initNative(){
   const A=NP('App'),B=NP('Browser');
   if(!A)return;
@@ -137,6 +156,8 @@ function initNative(){
     if(h.get('state')!==pe.st){pe.rej(new Error('AUTH'));return;}
     token=h.get('access_token');tokenExp=Date.now()+(Number(h.get('expires_in'))||3600)*1000;pe.res(token);
   });
+  A.addListener('appStateChange',x=>{if(x&&x.isActive)checkUpdate();});
+  checkUpdate();
   if(B)B.addListener('browserFinished',()=>{setTimeout(()=>{if(nPend){const pe=nPend;nPend=null;pe.rej(new Error(pe.interactive?'لم يكتمل تسجيل الدخول':'AUTH'));}},800);});
 }
 function getToken(interactive){
@@ -585,8 +606,8 @@ async function registerPush(){
       pushOn=true;
       PN.addListener('registration',x=>{LS.set('fcm',x.value);saveToken(x.value);});
       PN.addListener('registrationError',()=>{});
-      PN.addListener('pushNotificationReceived',n=>{msg((n.title||'')+(n.body?': '+n.body:''),true);loadAll().then(render).catch(()=>{});});
-      PN.addListener('pushNotificationActionPerformed',()=>{S.tab='a';S.draft=null;render();loadAll().then(render).catch(()=>{});});
+      PN.addListener('pushNotificationReceived',n=>{if(n.data&&n.data.type==='update'){checkUpdate();return;}msg((n.title||'')+(n.body?': '+n.body:''),true);loadAll().then(render).catch(()=>{});});
+      PN.addListener('pushNotificationActionPerformed',n=>{if(n&&n.notification&&n.notification.data&&n.notification.data.type==='update'){checkUpdate();return;}S.tab='a';S.draft=null;render();loadAll().then(render).catch(()=>{});});
       try{await PN.createChannel({id:'ops',name:'العمليات والمواعيد',description:'تنبيهات المرضى والعمليات',importance:5,visibility:1,vibration:true});}catch(e){}
     }
     let p=await PN.checkPermissions();
@@ -621,9 +642,11 @@ document.addEventListener('input',e=>{
   if(e.target.id==='q'){S.q=e.target.value;const pos=e.target.selectionStart;render();const i=$('#q');if(i){i.focus();i.setSelectionRange(pos,pos);}}
 });
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-t],[data-av],[data-nav],[data-today],[data-day],[data-open],[data-login],[data-gear],[data-savecfg],[data-cancelcfg],[data-logout],[data-new],[data-cancel],[data-add],[data-save],[data-back],[data-cal],[data-addap],[data-delap],[data-del],[data-sheetlink],[data-auth],[data-mode],[data-forgot],[data-mine],[data-lbclose],[data-rm],[data-demo],[data-yes],[data-no],[data-savedoc],[data-demoreset],[data-closesheet],.pw img');
+  const t=e.target.closest('[data-t],[data-av],[data-nav],[data-today],[data-day],[data-open],[data-login],[data-gear],[data-savecfg],[data-cancelcfg],[data-logout],[data-new],[data-cancel],[data-add],[data-save],[data-back],[data-cal],[data-addap],[data-delap],[data-del],[data-sheetlink],[data-auth],[data-mode],[data-forgot],[data-mine],[data-lbclose],[data-rm],[data-demo],[data-yes],[data-no],[data-savedoc],[data-demoreset],[data-closesheet],[data-upd],[data-updx],.pw img');
   if(!t){if(e.target.id==='lb')$('#lb').style.display='none';return;}
   const d=t.dataset;
+  if(d.upd!==undefined){doUpdate();return;}
+  if(d.updx!==undefined){updHide=true;showUpd();return;}
   if(d.yes!==undefined||d.no!==undefined){$('#dlg').style.display='none';if(askRes){const r=askRes;askRes=null;r(d.yes!==undefined);}return;}
   if(d.login!==undefined){login();return;}   // must run synchronously inside the click (popup)
   run(async()=>{
